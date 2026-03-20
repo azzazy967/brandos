@@ -126,10 +126,61 @@ router.get('/:id', async (req, res) => {
     const { brandId } = req.user!
     const product = await prisma.product.findFirst({
       where: { id: req.params.id, brandId: brandId! },
-      include: { orderItems: { include: { order: true }, orderBy: { order: { createdAt: 'desc' } }, take: 50 } },
+      include: { orderItems: { include: { order: true }, orderBy: { order: { createdAt: 'desc' } } } },
     })
     if (!product) { res.status(404).json({ success: false, error: 'Product not found' }); return }
-    res.json({ success: true, data: product })
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const recentItems = product.orderItems.filter(oi => new Date(oi.order.createdAt) >= thirtyDaysAgo)
+    const unitsSold30d = recentItems.reduce((s, oi) => s + oi.quantity, 0)
+    const totalStock = product.stockWarehouse + product.stockShopify + product.stockPhysical
+    const avgDailySales = Math.round((unitsSold30d / 30) * 10) / 10
+
+    // Stock status
+    let status = 'healthy'
+    if (totalStock === 0) status = 'out_of_stock'
+    else if (totalStock <= 5) status = 'critical'
+    else if (totalStock <= product.lowStockThreshold) status = 'low_stock'
+
+    // Build daily sales history for last 30 days
+    const salesByDay = new Map<string, { units: number; revenue: number }>()
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+      salesByDay.set(d.toISOString().slice(0, 10), { units: 0, revenue: 0 })
+    }
+    for (const oi of recentItems) {
+      const day = new Date(oi.order.createdAt).toISOString().slice(0, 10)
+      const existing = salesByDay.get(day)
+      if (existing) {
+        existing.units += oi.quantity
+        existing.revenue += oi.quantity * oi.unitPrice
+      }
+    }
+    const salesHistory = Array.from(salesByDay.entries()).map(([date, d]) => ({ date, ...d }))
+
+    // Build stock history (simulated from sales — running backwards from current stock)
+    let runningStock = totalStock
+    const stockHistory = [...salesHistory].reverse().map(day => {
+      const entry = { date: day.date, stock: runningStock }
+      runningStock += day.units // going backwards: add back what was sold
+      return entry
+    }).reverse()
+
+    // Projected stockout
+    const projectedStockoutDate = avgDailySales > 0
+      ? new Date(Date.now() + (totalStock / avgDailySales) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+      : undefined
+
+    const { orderItems, ...productData } = product
+    res.json({ success: true, data: {
+      ...productData,
+      unitsSold30d,
+      avgDailySales,
+      status,
+      stockHistory,
+      salesHistory,
+      projectedStockoutDate,
+    } })
   } catch (error) {
     console.error('Get product error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })

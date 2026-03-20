@@ -29,15 +29,64 @@ router.get('/summary', async (req, res) => {
     const totalSpend = snapshots.reduce((s, sn) => s + sn.spend, 0)
     const totalRevenue = snapshots.reduce((s, sn) => s + sn.revenue, 0)
     const totalOrders = snapshots.reduce((s, sn) => s + sn.orders, 0)
+    const totalImpressions = snapshots.reduce((s, sn) => s + sn.impressions, 0)
+    const totalClicks = snapshots.reduce((s, sn) => s + sn.clicks, 0)
     const blendedRoas = totalSpend > 0 ? totalRevenue / totalSpend : 0
     const cpa = totalOrders > 0 ? totalSpend / totalOrders : 0
+
+    // Per-platform stats
+    const buildPlatformStats = (plat: string) => {
+      const pSnaps = snapshots.filter(sn => sn.platform === plat)
+      const spend = pSnaps.reduce((s, sn) => s + sn.spend, 0)
+      const revenue = pSnaps.reduce((s, sn) => s + sn.revenue, 0)
+      const orders = pSnaps.reduce((s, sn) => s + sn.orders, 0)
+      const impressions = pSnaps.reduce((s, sn) => s + sn.impressions, 0)
+      const clicks = pSnaps.reduce((s, sn) => s + sn.clicks, 0)
+      return {
+        spend, revenue,
+        roas: spend > 0 ? Math.round((revenue / spend) * 100) / 100 : 0,
+        orders,
+        cpm: impressions > 0 ? Math.round((spend / impressions) * 1000 * 100) / 100 : 0,
+        cpc: clicks > 0 ? Math.round((spend / clicks) * 100) / 100 : 0,
+        ctr: impressions > 0 ? Math.round((clicks / impressions) * 10000) / 100 : 0,
+        convRate: clicks > 0 ? Math.round((orders / clicks) * 10000) / 100 : 0,
+      }
+    }
+
+    // ROAS trend by day
+    const dailyMap = new Map<string, { spend: number; revenue: number }>()
+    for (const sn of snapshots) {
+      const day = sn.date.toISOString().slice(0, 10)
+      const existing = dailyMap.get(day)
+      if (existing) {
+        existing.spend += sn.spend
+        existing.revenue += sn.revenue
+      } else {
+        dailyMap.set(day, { spend: sn.spend, revenue: sn.revenue })
+      }
+    }
+    const roasTrend = Array.from(dailyMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, d]) => ({
+        date,
+        roas: d.spend > 0 ? Math.round((d.revenue / d.spend) * 100) / 100 : 0,
+        beRoas: 2,
+      }))
+
+    // Funnel
+    const funnel = [
+      { stage: 'Impressions', value: totalImpressions },
+      { stage: 'Clicks', value: totalClicks },
+      { stage: 'Orders', value: totalOrders },
+    ]
 
     res.json({ success: true, data: {
       totalSpend, totalRevenue, blendedRoas: Math.round(blendedRoas * 100) / 100, totalOrders, cpa: Math.round(cpa * 100) / 100,
       attributedRevenue: totalRevenue, orders: totalOrders,
-      beRoas: 0, spendDelta: 0, roasDelta: 0,
-      metaStats: null, tiktokStats: null,
-      roasTrend: [], funnel: null,
+      beRoas: 2, spendDelta: 0, roasDelta: 0,
+      metaStats: buildPlatformStats('meta'),
+      tiktokStats: buildPlatformStats('tiktok'),
+      roasTrend, funnel,
     } })
   } catch (error) {
     console.error('Marketing summary error:', error)

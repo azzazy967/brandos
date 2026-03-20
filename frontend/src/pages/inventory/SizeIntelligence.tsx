@@ -68,7 +68,7 @@ export default function SizeIntelligence() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" horizontal={false} />
                       <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} tickFormatter={v => `${v}%`} />
                       <YAxis type="category" dataKey="size" tick={{ fontSize: 11 }} width={30} />
-                      <Tooltip formatter={(v: number) => `${v.toFixed(1)}%`} />
+                      <Tooltip formatter={(v: unknown) => typeof v === 'number' ? `${v.toFixed(1)}%` : '—'} />
                       <Bar dataKey="sellThroughPct" name="Sell-through %" radius={[0, 4, 4, 0]}>
                         {col.sizes.map((_, i) => (
                           <Cell key={i} fill={SIZE_COLORS[i % SIZE_COLORS.length]} />

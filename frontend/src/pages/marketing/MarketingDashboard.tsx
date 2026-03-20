@@ -122,7 +122,7 @@ export default function MarketingDashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
                 <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={d => d.slice(5)} />
                 <YAxis tick={{ fontSize: 10 }} />
-                <Tooltip formatter={(v: number) => `${v.toFixed(2)}x`} />
+                <Tooltip formatter={(v: unknown) => typeof v === 'number' ? `${v.toFixed(2)}x` : '—'} />
                 <Legend />
                 <ReferenceLine y={beRoas} stroke="#EF4444" strokeDasharray="4 4" label={{ value: `BEROAS ${beRoas.toFixed(1)}x`, position: 'right', fontSize: 11, fill: '#EF4444' }} />
                 <Line type="monotone" dataKey="roas" stroke="#2563EB" strokeWidth={2} dot={false} name="Blended ROAS" />

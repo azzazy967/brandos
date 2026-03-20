@@ -40,15 +40,28 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
     const userId = p.id as string
     const email = p.email as string
 
-    // Single-brand system: always fetch the one brand from DB to avoid stale JWT issues
-    prisma.brand.findFirst({ select: { id: true } })
-      .then(brand => {
-        req.user = { id: userId, email, brandId: brand?.id ?? null }
-        next()
-      })
-      .catch(() => {
-        res.status(401).json({ success: false, error: 'Brand not found' })
-      })
+    const brandId = p.brandId as string | null
+    if (brandId) {
+      // Verify brand exists
+      prisma.brand.findUnique({ where: { id: brandId }, select: { id: true } })
+        .then(brand => {
+          req.user = { id: userId, email, brandId: brand?.id ?? null }
+          next()
+        })
+        .catch(() => {
+          res.status(401).json({ success: false, error: 'Brand not found' })
+        })
+    } else {
+      // Fallback for tokens without brandId — find user's brand
+      prisma.brand.findFirst({ where: { users: { some: { id: userId } } }, select: { id: true } })
+        .then(brand => {
+          req.user = { id: userId, email, brandId: brand?.id ?? null }
+          next()
+        })
+        .catch(() => {
+          res.status(401).json({ success: false, error: 'Brand not found' })
+        })
+    }
   } catch {
     res.status(401).json({ success: false, error: 'Invalid or expired token' })
   }
