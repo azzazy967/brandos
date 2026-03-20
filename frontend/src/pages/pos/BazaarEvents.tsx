@@ -26,8 +26,8 @@ export default function BazaarEvents() {
 
   const fetchEvents = async () => {
     try {
-      const data = await api.get<{ data: BazaarEvent[] }>('/pos/events')
-      setEvents(data.data ?? [])
+      const data = await api.get<BazaarEvent[]>('/pos/events')
+      setEvents(data ?? [])
     } catch { toast.error('Failed to load events') }
     finally { setLoading(false) }
   }

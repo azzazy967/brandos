@@ -15,6 +15,8 @@ import posRouter from './routes/pos'
 import insightsRouter from './routes/insights'
 import webhooksRouter from './routes/webhooks'
 import settingsRouter from './routes/settings'
+import dashboardRouter from './routes/dashboard'
+import syncRouter from './routes/sync'
 
 const app = express()
 
@@ -51,6 +53,8 @@ app.use('/api/pos', posRouter)
 app.use('/api/insights', insightsRouter)
 app.use('/api/webhooks', webhooksRouter)
 app.use('/api/settings', settingsRouter)
+app.use('/api/dashboard', dashboardRouter)
+app.use('/api/sync', syncRouter)
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

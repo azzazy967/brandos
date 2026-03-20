@@ -32,7 +32,13 @@ router.get('/summary', async (req, res) => {
     const blendedRoas = totalSpend > 0 ? totalRevenue / totalSpend : 0
     const cpa = totalOrders > 0 ? totalSpend / totalOrders : 0
 
-    res.json({ success: true, data: { totalSpend, totalRevenue, blendedRoas: Math.round(blendedRoas * 100) / 100, totalOrders, cpa: Math.round(cpa * 100) / 100 } })
+    res.json({ success: true, data: {
+      totalSpend, totalRevenue, blendedRoas: Math.round(blendedRoas * 100) / 100, totalOrders, cpa: Math.round(cpa * 100) / 100,
+      attributedRevenue: totalRevenue, orders: totalOrders,
+      beRoas: 0, spendDelta: 0, roasDelta: 0,
+      metaStats: null, tiktokStats: null,
+      roasTrend: [], funnel: null,
+    } })
   } catch (error) {
     console.error('Marketing summary error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })

@@ -56,8 +56,8 @@ export default function Integrations() {
 
   const fetchIntegrations = async () => {
     try {
-      const data = await api.get<{ data: Integration[] }>('/settings/integrations')
-      setIntegrations(data.data ?? [])
+      const data = await api.get<Integration[]>('/settings/integrations')
+      setIntegrations(data ?? [])
     } catch { toast.error('Failed to load integrations') }
     finally { setLoading(false) }
   }

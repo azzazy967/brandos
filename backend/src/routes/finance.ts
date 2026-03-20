@@ -18,10 +18,17 @@ router.get('/summary', async (req, res) => {
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
     const { start, end } = getMtdRange()
 
-    const [orders, expenses, shipments] = await Promise.all([
+    const now = new Date()
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59)
+
+    const [orders, expenses, shipments, lastMonthOrders, lastMonthExpenses, lastMonthPos] = await Promise.all([
       prisma.order.findMany({ where: { brandId, createdAt: { gte: start, lte: end } } }),
       prisma.expense.findMany({ where: { brandId, date: { gte: start, lte: end } } }),
       prisma.shipment.findMany({ where: { brandId, codStatus: 'pending' } }),
+      prisma.order.findMany({ where: { brandId, createdAt: { gte: lastMonthStart, lte: lastMonthEnd } } }),
+      prisma.expense.findMany({ where: { brandId, date: { gte: lastMonthStart, lte: lastMonthEnd } } }),
+      prisma.posOrder.findMany({ where: { brandId, createdAt: { gte: lastMonthStart, lte: lastMonthEnd } } }),
     ])
 
     const posOrders = await prisma.posOrder.findMany({ where: { brandId, createdAt: { gte: start, lte: end } } })
@@ -33,7 +40,20 @@ router.get('/summary', async (req, res) => {
     const marginPct = revenueMtd > 0 ? (grossProfit / revenueMtd) * 100 : 0
     const codPending = shipments.reduce((s, sh) => s + sh.codAmount, 0)
 
-    res.json({ success: true, data: { revenueMtd, expensesMtd, grossProfit, netProfit, marginPct: Math.round(marginPct * 100) / 100, codPending } })
+    const revenueLastMonth = lastMonthOrders.reduce((s, o) => s + o.totalAmount, 0) + lastMonthPos.reduce((s, o) => s + o.finalAmount, 0)
+    const expensesLastMonth = lastMonthExpenses.reduce((s, e) => s + e.amount, 0)
+    const ordersMtd = orders.length + posOrders.length
+    const ordersLastMonth = lastMonthOrders.length + lastMonthPos.length
+    const profitLastMonth = revenueLastMonth - expensesLastMonth
+    const marginLastMonth = revenueLastMonth > 0 ? (profitLastMonth / revenueLastMonth) * 100 : 0
+
+    res.json({ success: true, data: {
+      revenueMtd, expensesMtd, grossProfit, netProfit, marginPct: Math.round(marginPct * 100) / 100, codPending,
+      revenueLastMonth, expensesLastMonth, ordersMtd, ordersLastMonth,
+      marginLastMonth: Math.round(marginLastMonth * 100) / 100,
+      blendedRoas: 0, beRoas: 0,
+      revenueTrend: [], revenueBreakdown: [], expenseBreakdown: [], plTable: [],
+    } })
   } catch (error) {
     console.error('Finance summary error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })
@@ -97,7 +117,7 @@ router.get('/expenses', async (req, res) => {
       skip: (parseInt(page) - 1) * parseInt(limit),
       take: parseInt(limit),
     })
-    res.json({ success: true, data: expenses })
+    res.json({ success: true, data: { data: expenses, trend: [] } })
   } catch (error) {
     console.error('Expenses list error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })

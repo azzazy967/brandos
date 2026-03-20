@@ -1,17 +1,18 @@
-import { useState, useEffect } from 'react'
-import { Calculator } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { Calculator, Package } from 'lucide-react'
 import { DataTable, ColumnDef } from '@/components/shared/DataTable'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api'
 import { toast } from '@/stores/toast-store'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import { calculateProductBEROAS, calculateOverheadPerUnit } from '@/lib/beroas'
-import { BeRoasIndicator } from '@/components/shared/BeRoasIndicator'
+import { Link } from 'react-router-dom'
 
 interface BeroasProduct {
-  id: string; title: string; sku: string; sellingPrice: number; costPrice: number
-  currentRoas?: number; beRoas?: number; marginPct?: number; roasGap?: number
+  id: string; title: string; sku: string; size: string | null; color: string | null
+  sellingPrice: number; costPrice: number; grossProfit: number; marginPct: number; beRoas: number
 }
 
 export default function BeroasCalculator() {
@@ -24,20 +25,44 @@ export default function BeroasCalculator() {
   const [unitsSold, setUnitsSold] = useState('200')
   const [products, setProducts] = useState<BeroasProduct[]>([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  useEffect(() => {
-    Promise.all([
-      api.get<BeroasProduct[]>('/beroas/products'),
-      api.get<{ monthlyRent: number; monthlySalaries: number; otherMonthly: number; avgShippingCost: number }>('/settings/overhead'),
-    ]).then(([prods, overhead]) => {
-      setProducts(prods)
-      setMonthlyRent(String(overhead.monthlyRent))
-      setMonthlySalaries(String(overhead.monthlySalaries))
-      setOtherMonthly(String(overhead.otherMonthly))
-      setAvgShipping(String(overhead.avgShippingCost))
-    }).catch(() => toast.error('Failed to load BEROAS data'))
-    .finally(() => setLoading(false))
+  const fetchProducts = useCallback((rent: string, salaries: string, other: string, units: string, shipping: string) => {
+    const params = new URLSearchParams({
+      rent, salaries, otherFixed: other, unitsSoldMonth: units, avgShippingCost: shipping,
+    })
+    api.get<BeroasProduct[]>(`/beroas/products?${params}`)
+      .then(data => setProducts(data ?? []))
+      .catch(() => toast.error('Failed to load product BEROAS'))
+      .finally(() => setLoading(false))
   }, [])
+
+  // Initial load — get overhead settings first
+  useEffect(() => {
+    api.get<{ monthlyRent: number; monthlySalaries: number; otherMonthly: number; avgShippingCost: number }>('/settings/overhead')
+      .then(oh => {
+        const o = oh ?? { monthlyRent: 0, monthlySalaries: 0, otherMonthly: 0, avgShippingCost: 0 }
+        setMonthlyRent(String(o.monthlyRent))
+        setMonthlySalaries(String(o.monthlySalaries))
+        setOtherMonthly(String(o.otherMonthly))
+        setAvgShipping(String(o.avgShippingCost))
+        fetchProducts(String(o.monthlyRent), String(o.monthlySalaries), String(o.otherMonthly), unitsSold, String(o.avgShippingCost))
+      })
+      .catch(() => {
+        fetchProducts('0', '0', '0', unitsSold, '50')
+      })
+  }, []) // eslint-disable-line
+
+  // Debounced refetch when inputs change
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setLoading(true)
+      fetchProducts(monthlyRent, monthlySalaries, otherMonthly, unitsSold, avgShipping)
+    }, 500)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [monthlyRent, monthlySalaries, otherMonthly, unitsSold, avgShipping, fetchProducts])
 
   const overheadPerUnit = calculateOverheadPerUnit({
     monthlyRent: Number(monthlyRent) || 0,
@@ -53,24 +78,35 @@ export default function BeroasCalculator() {
     overheadPerUnit,
   })
 
+  const filtered = search
+    ? products.filter(p => p.title.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase()))
+    : products
+
+  const hasCostPrices = products.some(p => p.costPrice > 0)
+
   const columns: ColumnDef<BeroasProduct>[] = [
+    { key: 'title', header: 'Product', sortable: true, render: p => <p className="font-medium text-sm">{p.title}</p> },
     { key: 'sku', header: 'SKU', render: p => <span className="font-mono text-xs">{p.sku}</span> },
-    { key: 'title', header: 'Product', render: p => <p className="font-medium text-sm">{p.title}</p> },
-    { key: 'sellingPrice', header: 'Price', render: p => <span className="font-mono">{formatCurrency(p.sellingPrice)}</span> },
-    { key: 'marginPct', header: 'Margin %', sortable: true, render: p => p.marginPct !== undefined ? (
-      <span className={`font-semibold ${(p.marginPct ?? 0) >= 30 ? 'text-green-600' : (p.marginPct ?? 0) >= 20 ? 'text-amber-600' : 'text-red-600'}`}>
-        {formatPercent(p.marginPct)}
+    { key: 'size', header: 'Size/Color', render: p => (
+      <span className="text-xs text-slate-500">{[p.size, p.color].filter(Boolean).join(' / ') || '—'}</span>
+    )},
+    { key: 'sellingPrice', header: 'Selling Price', render: p => <span className="font-mono">{formatCurrency(p.sellingPrice)}</span> },
+    { key: 'costPrice', header: 'COGS', render: p => <span className="font-mono">{formatCurrency(p.costPrice)}</span> },
+    { key: 'grossProfit', header: 'Gross Profit/unit', sortable: true, render: p => (
+      <span className={`font-mono font-semibold ${p.grossProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+        {formatCurrency(p.grossProfit)}
       </span>
-    ) : <span className="text-slate-400">—</span> },
-    { key: 'beRoas', header: 'BEROAS', sortable: true, render: p => p.beRoas ? <span className="font-mono font-semibold">{p.beRoas.toFixed(2)}x</span> : <span className="text-slate-400">—</span> },
-    { key: 'currentRoas', header: 'Current ROAS', sortable: true, render: p => p.currentRoas && p.beRoas ? (
-      <BeRoasIndicator actualRoas={p.currentRoas} beRoas={p.beRoas} showDetails={false} />
-    ) : <span className="text-slate-400">—</span> },
-    { key: 'roasGap', header: 'Gap', sortable: true, render: p => p.roasGap !== undefined ? (
-      <span className={`font-mono font-semibold ${(p.roasGap ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-        {(p.roasGap ?? 0) >= 0 ? '+' : ''}{p.roasGap?.toFixed(2)}x
+    )},
+    { key: 'marginPct', header: 'Margin %', sortable: true, render: p => (
+      <span className={`font-semibold ${p.marginPct >= 30 ? 'text-green-600' : p.marginPct >= 20 ? 'text-amber-600' : 'text-red-600'}`}>
+        {p.marginPct.toFixed(1)}%
       </span>
-    ) : <span className="text-slate-400">—</span> },
+    )},
+    { key: 'beRoas', header: 'Breakeven ROAS', sortable: true, render: p => (
+      <span className={`font-mono font-bold ${p.beRoas < 2 ? 'text-green-600' : p.beRoas <= 3.5 ? 'text-amber-600' : 'text-red-600'}`}>
+        {p.beRoas >= 999 ? '∞' : `${p.beRoas.toFixed(2)}x`}
+      </span>
+    )},
   ]
 
   return (
@@ -90,7 +126,6 @@ export default function BeroasCalculator() {
               <Input label="COGS per unit (EGP)" type="number" value={cogs} onChange={e => setCogs(e.target.value)} min="0" />
               <Input label="Avg Shipping Cost (EGP)" type="number" value={avgShipping} onChange={e => setAvgShipping(e.target.value)} min="0" />
             </div>
-
             <div className="space-y-3 pt-2 border-t border-slate-100">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Monthly Overhead</p>
               <div className="grid grid-cols-2 gap-3">
@@ -111,9 +146,8 @@ export default function BeroasCalculator() {
               <p className="text-5xl font-bold font-mono text-[#2563EB]">
                 {isFinite(result.beRoas) ? result.beRoas.toFixed(2) : '∞'}x
               </p>
-              <p className="text-sm text-blue-500 mt-2">You need to earn {isFinite(result.beRoas) ? result.beRoas.toFixed(2) : '∞'} EGP for every 1 EGP spent on ads to break even</p>
+              <p className="text-sm text-blue-500 mt-2">You need to earn {isFinite(result.beRoas) ? result.beRoas.toFixed(2) : '∞'} EGP for every 1 EGP spent on ads</p>
             </div>
-
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'Overhead/unit', value: `EGP ${overheadPerUnit.toFixed(2)}` },
@@ -127,26 +161,37 @@ export default function BeroasCalculator() {
                 </div>
               ))}
             </div>
-
-            {result.marginPct < 0 && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-                <p className="text-sm text-red-700 font-medium">Warning: Negative margin — this product loses money even without ads</p>
-              </div>
-            )}
           </CardContent>
         </Card>
       </div>
 
       <div>
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Per-Product BEROAS Table</h2>
-        <DataTable
-          data={products}
-          columns={columns}
-          loading={loading}
-          exportFilename="beroas-products"
-          emptyTitle="No product data"
-          emptyDescription="Connect Shopify and enter COGS to see per-product BEROAS."
-        />
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-slate-900">Per-Product BEROAS</h2>
+          <Input placeholder="Search by name or SKU..." value={search} onChange={e => setSearch(e.target.value)} className="w-64" />
+        </div>
+
+        {!hasCostPrices && !loading && products.length > 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Package size={40} className="mx-auto text-slate-300 mb-3" />
+              <h3 className="font-semibold text-slate-700">Add your product cost prices</h3>
+              <p className="text-sm text-slate-500 mt-1">Set cost prices in Inventory to see per-product BEROAS</p>
+              <Link to="/inventory">
+                <Button variant="secondary" className="mt-4">Go to Inventory</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <DataTable
+            data={filtered}
+            columns={columns}
+            loading={loading}
+            exportFilename="beroas-products"
+            emptyTitle="No products"
+            emptyDescription="Add products to see per-product BEROAS analysis."
+          />
+        )}
       </div>
     </div>
   )

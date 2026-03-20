@@ -13,7 +13,7 @@ router.get('/overhead', async (req, res) => {
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
     const settings = await prisma.overheadSettings.findUnique({ where: { brandId } })
-    res.json({ success: true, data: settings })
+    res.json({ success: true, data: settings ?? { monthlyRent: 0, monthlySalaries: 0, otherMonthly: 0, avgShippingCost: 0 } })
   } catch (error) {
     console.error('Get overhead error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })
@@ -66,6 +66,17 @@ const integrationSchema = z.object({
   credentials: z.record(z.string()),
 })
 
+const upsertIntegration = async (brandId: string, type: string, credentials: Record<string, string>) => {
+  const encryptedCreds = Object.fromEntries(
+    Object.entries(credentials).map(([k, v]) => [k, encrypt(v)])
+  )
+  const existing = await prisma.integration.findFirst({ where: { brandId, type } })
+  if (existing) {
+    return prisma.integration.update({ where: { id: existing.id }, data: { credentials: encryptedCreds, status: 'connected' } })
+  }
+  return prisma.integration.create({ data: { brandId, type, credentials: encryptedCreds, status: 'connected' } })
+}
+
 router.post('/integrations', async (req, res) => {
   try {
     const { brandId } = req.user!
@@ -74,24 +85,7 @@ router.post('/integrations', async (req, res) => {
     const parsed = integrationSchema.safeParse(req.body)
     if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
 
-    const { type, credentials } = parsed.data
-    const encryptedCreds = Object.fromEntries(
-      Object.entries(credentials).map(([k, v]) => [k, encrypt(v)])
-    )
-
-    const existing = await prisma.integration.findFirst({ where: { brandId, type } })
-    let integration
-    if (existing) {
-      integration = await prisma.integration.update({
-        where: { id: existing.id },
-        data: { credentials: encryptedCreds, status: 'connected' },
-      })
-    } else {
-      integration = await prisma.integration.create({
-        data: { brandId, type, credentials: encryptedCreds, status: 'connected' },
-      })
-    }
-
+    const integration = await upsertIntegration(brandId, parsed.data.type, parsed.data.credentials)
     res.json({ success: true, data: { ...integration, credentials: '[encrypted]' } })
   } catch (error) {
     console.error('Create integration error:', error)
@@ -99,13 +93,32 @@ router.post('/integrations', async (req, res) => {
   }
 })
 
-router.delete('/integrations/:id', async (req, res) => {
+router.post('/integrations/:type', async (req, res) => {
   try {
     const { brandId } = req.user!
-    const result = await prisma.integration.findFirst({ where: { id: req.params.id, brandId: brandId! } })
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+
+    const typeParam = req.params.type as 'shopify' | 'windsor' | 'aramex' | 'bosta'
+    const credentialsSchema = z.record(z.string())
+    const parsedCreds = credentialsSchema.safeParse(req.body)
+    if (!parsedCreds.success) { res.status(400).json({ success: false, error: 'Invalid credentials' }); return }
+
+    const integration = await upsertIntegration(brandId, typeParam, parsedCreds.data)
+    res.json({ success: true, data: { ...integration, credentials: '[encrypted]' } })
+  } catch (error) {
+    console.error('Create integration by type error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+router.delete('/integrations/:type', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+    const result = await prisma.integration.findFirst({ where: { type: req.params.type, brandId } })
     if (!result) { res.status(404).json({ success: false, error: 'Integration not found' }); return }
 
-    await prisma.integration.update({ where: { id: req.params.id }, data: { status: 'disconnected' } })
+    await prisma.integration.update({ where: { id: result.id }, data: { status: 'disconnected' } })
     res.json({ success: true, data: { disconnected: true } })
   } catch (error) {
     console.error('Delete integration error:', error)

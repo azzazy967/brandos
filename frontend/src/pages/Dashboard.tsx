@@ -51,13 +51,13 @@ export default function Dashboard() {
   useEffect(() => {
     Promise.all([
       api.get<FinanceSummary>('/finance/summary'),
-      api.get<{ data: AiInsight[] }>('/insights?unread=true&limit=3'),
-      api.get<{ data: RecentOrder[] }>('/operations/orders?limit=10'),
+      api.get<AiInsight[]>('/insights?unread=true&limit=3'),
+      api.get<RecentOrder[]>('/operations/orders?limit=10'),
       api.get<DashboardStats>('/dashboard/stats'),
     ]).then(([fin, ins, orders, st]) => {
       setFinance(fin)
-      setInsights(ins.data ?? [])
-      setRecentOrders(orders.data ?? [])
+      setInsights(ins ?? [])
+      setRecentOrders(orders ?? [])
       setStats(st)
     }).catch(() => toast.error('Failed to load dashboard')).finally(() => setLoading(false))
   }, [])

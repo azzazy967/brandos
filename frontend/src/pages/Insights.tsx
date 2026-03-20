@@ -21,8 +21,8 @@ export default function Insights() {
 
   const fetchInsights = async () => {
     try {
-      const data = await api.get<{ data: AiInsight[] }>('/insights')
-      setInsights(data.data ?? [])
+      const data = await api.get<AiInsight[]>('/insights')
+      setInsights(data ?? [])
     } catch { toast.error('Failed to load insights') }
     finally { setLoading(false) }
   }

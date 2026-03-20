@@ -69,20 +69,21 @@ router.get('/products', async (req, res) => {
     const { brandId } = req.user!
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
+    const q = req.query as Record<string, string>
     const overhead = await prisma.overheadSettings.findUnique({ where: { brandId } })
-    const now = new Date()
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
-    const orders = await prisma.order.findMany({
-      where: { brandId, createdAt: { gte: monthStart } },
-      include: { items: true },
+    const rent = q.rent !== undefined ? parseFloat(q.rent) : (overhead?.monthlyRent ?? 0)
+    const salaries = q.salaries !== undefined ? parseFloat(q.salaries) : (overhead?.monthlySalaries ?? 0)
+    const otherFixed = q.otherFixed !== undefined ? parseFloat(q.otherFixed) : (overhead?.otherMonthly ?? 0)
+    const avgShipping = q.avgShippingCost !== undefined ? parseFloat(q.avgShippingCost) : (overhead?.avgShippingCost ?? 0)
+    const unitsSold = q.unitsSoldMonth !== undefined ? parseFloat(q.unitsSoldMonth) : (() => {
+      // fallback: count from DB
+      return 100 // default if not provided
+    })()
+
+    const overheadPerUnit = calculateOverheadPerUnit({
+      monthlyRent: rent, monthlySalaries: salaries, otherMonthly: otherFixed, unitsSoldThisMonth: unitsSold,
     })
-
-    const unitsSoldThisMonth = orders.reduce((s, o) => s + o.items.reduce((ss, i) => ss + i.quantity, 0), 0)
-    const overheadPerUnit = overhead
-      ? calculateOverheadPerUnit({ monthlyRent: overhead.monthlyRent, monthlySalaries: overhead.monthlySalaries, otherMonthly: overhead.otherMonthly, unitsSoldThisMonth })
-      : 0
-    const avgShippingCost = overhead?.avgShippingCost ?? 0
 
     const products = await prisma.product.findMany({ where: { brandId } })
 
@@ -90,10 +91,16 @@ router.get('/products', async (req, res) => {
       const { grossProfit, marginPct, beRoas } = calculateProductBEROAS({
         sellingPrice: p.sellingPrice,
         cogs: p.costPrice,
-        avgShippingCost,
+        avgShippingCost: avgShipping,
         overheadPerUnit,
       })
-      return { productId: p.id, title: p.title, sku: p.sku, sellingPrice: p.sellingPrice, costPrice: p.costPrice, grossProfit: Math.round(grossProfit * 100) / 100, marginPct: Math.round(marginPct * 10000) / 100, beRoas: Math.round(beRoas * 100) / 100 }
+      return {
+        id: p.id, title: p.title, sku: p.sku, size: p.size, color: p.color,
+        sellingPrice: p.sellingPrice, costPrice: p.costPrice,
+        grossProfit: Math.round(grossProfit * 100) / 100,
+        marginPct: Math.round(marginPct * 10000) / 100,
+        beRoas: beRoas === Infinity ? 999 : Math.round(beRoas * 100) / 100,
+      }
     })
 
     res.json({ success: true, data: result })

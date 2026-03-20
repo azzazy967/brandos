@@ -55,6 +55,68 @@ router.get('/', async (req, res) => {
   }
 })
 
+router.get('/restock', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+
+    const products = await prisma.product.findMany({
+      where: { brandId },
+      include: { orderItems: { include: { order: true } } },
+    })
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const restock = products.map((p) => {
+      const recentItems = p.orderItems.filter((oi) => new Date(oi.order.createdAt) >= thirtyDaysAgo)
+      const unitsSold30d = recentItems.reduce((s, oi) => s + oi.quantity, 0)
+      const dailyAvg = unitsSold30d / 30
+      const totalStock = p.stockWarehouse + p.stockShopify + p.stockPhysical
+      const suggestedQty = Math.max(0, Math.ceil(dailyAvg * 45) - totalStock)
+      const daysOfStockLeft = dailyAvg > 0 ? Math.round(totalStock / dailyAvg) : 999
+      if (suggestedQty <= 0) return null
+      return { id: p.id, title: p.title, sku: p.sku, size: p.size, color: p.color, currentStock: totalStock, dailyAvg: Math.round(dailyAvg * 10) / 10, suggestedQty, daysOfStockLeft }
+    }).filter(Boolean)
+
+    res.json({ success: true, data: restock })
+  } catch (error) {
+    console.error('Restock error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+router.get('/size-intelligence', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+
+    const products = await prisma.product.findMany({
+      where: { brandId },
+      include: { orderItems: true },
+    })
+
+    const collections: Record<string, Record<string, number>> = {}
+    for (const p of products) {
+      if (!p.collection || !p.size) continue
+      if (!collections[p.collection]) collections[p.collection] = {}
+      const sold = p.orderItems.reduce((s, oi) => s + oi.quantity, 0)
+      collections[p.collection][p.size] = (collections[p.collection][p.size] || 0) + sold
+    }
+
+    const result = Object.entries(collections).map(([collection, sizes]) => {
+      const total = Object.values(sizes).reduce((s, v) => s + v, 0)
+      const sizeData = Object.entries(sizes).map(([size, sold]) => ({
+        size, sold, pct: total > 0 ? Math.round((sold / total) * 100) : 0,
+      })).sort((a, b) => b.sold - a.sold)
+      return { collection, totalSold: total, sizes: sizeData }
+    })
+
+    res.json({ success: true, data: result })
+  } catch (error) {
+    console.error('Size intelligence error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
 router.get('/:id', async (req, res) => {
   try {
     const { brandId } = req.user!

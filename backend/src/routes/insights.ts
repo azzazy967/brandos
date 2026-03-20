@@ -24,10 +24,21 @@ router.get('/', async (req, res) => {
       take: parseInt(limit),
     })
 
-    const unreadCount = await prisma.aiInsight.count({ where: { brandId, isRead: false } })
-    res.json({ success: true, data: { insights, unreadCount } })
+    res.json({ success: true, data: insights })
   } catch (error) {
     console.error('Insights list error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+router.get('/unread-count', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+    const count = await prisma.aiInsight.count({ where: { brandId, isRead: false } })
+    res.json({ success: true, data: { count } })
+  } catch (error) {
+    console.error('Unread count error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })
   }
 })
@@ -72,6 +83,18 @@ router.post('/generate', async (req, res) => {
     res.json({ success: true, data: { generated: created.length, insights: created } })
   } catch (error) {
     console.error('Generate insights error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+router.put('/read-all', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+    await prisma.aiInsight.updateMany({ where: { brandId, isRead: false }, data: { isRead: true } })
+    res.json({ success: true, data: { updated: true } })
+  } catch (error) {
+    console.error('Mark all read error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })
   }
 })

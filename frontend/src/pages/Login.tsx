@@ -34,8 +34,8 @@ export default function Login() {
     if (!validate()) return
     setLoading(true)
     try {
-      const res = await api.post<{ success: boolean; data: LoginResponse }>('/auth/login', { email, password })
-      login(res.data.token, res.data.user)
+      const data = await api.post<LoginResponse>('/auth/login', { email, password })
+      login(data.token, data.user)
       navigate('/')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Login failed')

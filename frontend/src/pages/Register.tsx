@@ -38,13 +38,13 @@ export default function Register() {
     if (!validate()) return
     setLoading(true)
     try {
-      const res = await api.post<{ success: boolean; data: RegisterResponse }>('/auth/register', {
+      const data = await api.post<RegisterResponse>('/auth/register', {
         name: form.name,
         email: form.email,
         password: form.password,
         brandName: form.name,
       })
-      login(res.data.token, res.data.user)
+      login(data.token, data.user)
       navigate('/onboarding')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Registration failed')

@@ -52,7 +52,12 @@ export async function apiFetch<T = unknown>(
     return undefined as T
   }
 
-  return response.json() as Promise<T>
+  const json = await response.json()
+  // Auto-unwrap { success, data } envelope from backend
+  if (json && typeof json === 'object' && 'success' in json && 'data' in json) {
+    return json.data as T
+  }
+  return json as T
 }
 
 export const api = {

@@ -20,8 +20,8 @@ export default function FailedDeliveries() {
 
   const fetchData = async () => {
     try {
-      const data = await api.get<{ data: FailedDelivery[] }>('/operations/failed')
-      setRecords(data.data ?? [])
+      const data = await api.get<FailedDelivery[]>('/operations/failed')
+      setRecords(data ?? [])
     } catch { toast.error('Failed to load failed deliveries') }
     finally { setLoading(false) }
   }

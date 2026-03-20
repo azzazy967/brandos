@@ -34,19 +34,19 @@ export default function PosInterface() {
 
   useEffect(() => {
     Promise.all([
-      api.get<{ data: PosProduct[] }>('/pos/products'),
-      api.get<{ data: ActiveEvent[] }>('/pos/events?status=active'),
+      api.get<PosProduct[]>('/pos/products'),
+      api.get<ActiveEvent[]>('/pos/events?status=active'),
     ]).then(([prods, events]) => {
-      setProducts(prods.data ?? [])
-      setActiveEvent((events.data ?? [])[0] ?? null)
+      setProducts(prods ?? [])
+      setActiveEvent((events ?? [])[0] ?? null)
     }).catch(() => toast.error('Failed to load POS data'))
     .finally(() => setLoading(false))
   }, [])
 
   const refreshProducts = async () => {
     try {
-      const data = await api.get<{ data: PosProduct[] }>('/pos/products')
-      setProducts(data.data ?? [])
+      const data = await api.get<PosProduct[]>('/pos/products')
+      setProducts(data ?? [])
     } catch { /* silent */ }
   }
 

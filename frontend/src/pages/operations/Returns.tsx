@@ -16,8 +16,8 @@ export default function Returns() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get<{ data: ReturnRow[] }>('/operations/returns')
-      .then(d => setRows(d.data ?? []))
+    api.get<ReturnRow[]>('/operations/returns')
+      .then(d => setRows(d ?? []))
       .catch(() => toast.error('Failed to load returns'))
       .finally(() => setLoading(false))
   }, [])

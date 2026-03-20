@@ -5,6 +5,36 @@ import { authenticate } from '../middleware/auth'
 const router = Router()
 router.use(authenticate)
 
+router.get('/summary', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+
+    const now = new Date()
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const startOfWeek = new Date(startOfDay.getTime() - startOfDay.getDay() * 86400000)
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+    const [ordersToday, ordersWeek, shipments] = await Promise.all([
+      prisma.order.count({ where: { brandId, createdAt: { gte: startOfDay } } }),
+      prisma.order.count({ where: { brandId, createdAt: { gte: startOfWeek } } }),
+      prisma.shipment.findMany({ where: { brandId }, select: { status: true, createdAt: true, updatedAt: true } }),
+    ])
+
+    const deliveredMtd = shipments.filter(s => s.status === 'delivered' && s.updatedAt >= startOfMonth).length
+    const failedMtd = shipments.filter(s => s.status === 'failed').length
+    const inTransit = shipments.filter(s => s.status === 'in_transit').length
+    const returnedCount = shipments.filter(s => s.status === 'returned').length
+    const totalDelivered = shipments.filter(s => ['delivered', 'returned'].includes(s.status)).length
+    const returnRate = totalDelivered > 0 ? Math.round((returnedCount / totalDelivered) * 100 * 10) / 10 : 0
+
+    res.json({ success: true, data: { ordersToday, ordersWeek, deliveredMtd, failedMtd, inTransit, returnRate } })
+  } catch (error) {
+    console.error('Operations summary error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
 router.get('/orders', async (req, res) => {
   try {
     const { brandId } = req.user!
@@ -71,6 +101,41 @@ router.get('/failed', async (req, res) => {
     res.json({ success: true, data: shipments })
   } catch (error) {
     console.error('Failed deliveries error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+router.post('/shipments/:id/retry', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+
+    const shipment = await prisma.shipment.findFirst({ where: { id: req.params.id, brandId } })
+    if (!shipment) { res.status(404).json({ success: false, error: 'Shipment not found' }); return }
+
+    const updated = await prisma.shipment.update({ where: { id: req.params.id }, data: { status: 'created' } })
+    res.json({ success: true, data: updated })
+  } catch (error) {
+    console.error('Retry shipment error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+router.put('/shipments/:id/cancel', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+
+    const shipment = await prisma.shipment.findFirst({ where: { id: req.params.id, brandId }, include: { order: true } })
+    if (!shipment) { res.status(404).json({ success: false, error: 'Shipment not found' }); return }
+
+    await prisma.$transaction([
+      prisma.shipment.update({ where: { id: req.params.id }, data: { status: 'returned' } }),
+      prisma.order.update({ where: { id: shipment.orderId }, data: { status: 'cancelled' } }),
+    ])
+    res.json({ success: true, data: { cancelled: true } })
+  } catch (error) {
+    console.error('Cancel shipment error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })
   }
 })

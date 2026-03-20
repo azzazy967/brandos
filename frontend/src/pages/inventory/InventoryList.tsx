@@ -42,8 +42,8 @@ export default function InventoryList() {
       const params = new URLSearchParams()
       if (collectionFilter) params.set('collection', collectionFilter)
       if (statusFilter) params.set('status', statusFilter)
-      const data = await api.get<{ data: Product[] }>(`/inventory?${params}`)
-      setProducts(data.data ?? [])
+      const data = await api.get<Product[]>(`/inventory?${params}`)
+      setProducts(data ?? [])
     } catch { toast.error('Failed to load inventory') }
     finally { setLoading(false) }
   }, [collectionFilter, statusFilter])
