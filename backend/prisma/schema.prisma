@@ -1,0 +1,251 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         String   @default("owner")
+  brandId      String?
+  createdAt    DateTime @default(now())
+  brand        Brand?   @relation(fields: [brandId], references: [id])
+}
+
+model Brand {
+  id                 String              @id @default(cuid())
+  name               String
+  email              String              @unique
+  language           String              @default("en")
+  currency           String              @default("EGP")
+  logoUrl            String?
+  createdAt          DateTime            @default(now())
+  users              User[]
+  integrations       Integration[]
+  products           Product[]
+  orders             Order[]
+  shipments          Shipment[]
+  expenses           Expense[]
+  posTransactions    PosTransaction[]
+  posOrders          PosOrder[]
+  marketingSnapshots MarketingSnapshot[]
+  aiInsights         AiInsight[]
+  overheadSettings   OverheadSettings?
+  bazaarEvents       BazaarEvent[]
+}
+
+model Integration {
+  id           String    @id @default(cuid())
+  brandId      String
+  type         String
+  credentials  Json
+  status       String    @default("disconnected")
+  lastSyncedAt DateTime?
+  brand        Brand     @relation(fields: [brandId], references: [id])
+}
+
+model Product {
+  id                String         @id @default(cuid())
+  brandId           String
+  shopifyId         String?
+  title             String
+  sku               String
+  collection        String?
+  category          String?
+  size              String?
+  color             String?
+  imageUrl          String?
+  sellingPrice      Float
+  costPrice         Float
+  stockWarehouse    Int            @default(0)
+  stockShopify      Int            @default(0)
+  stockPhysical     Int            @default(0)
+  lowStockThreshold Int            @default(10)
+  brand             Brand          @relation(fields: [brandId], references: [id])
+  orderItems        OrderItem[]
+  posOrderItems     PosOrderItem[]
+  bazaarInventory   BazaarInventory[]
+}
+
+model Order {
+  id             String     @id @default(cuid())
+  brandId        String
+  shopifyOrderId String?
+  source         String
+  status         String
+  totalAmount    Float
+  paymentMethod  String
+  customerName   String?
+  customerPhone  String?
+  createdAt      DateTime   @default(now())
+  brand          Brand      @relation(fields: [brandId], references: [id])
+  items          OrderItem[]
+  shipment       Shipment?
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  unitPrice Float
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model PosOrder {
+  id             String         @id @default(cuid())
+  brandId        String
+  orderNumber    String
+  eventId        String?
+  totalAmount    Float
+  discountAmount Float          @default(0)
+  finalAmount    Float
+  paymentMethod  String
+  notes          String?
+  createdAt      DateTime       @default(now())
+  brand          Brand          @relation(fields: [brandId], references: [id])
+  event          BazaarEvent?   @relation(fields: [eventId], references: [id])
+  items          PosOrderItem[]
+
+  @@unique([brandId, orderNumber])
+  @@index([brandId, createdAt])
+}
+
+model PosOrderItem {
+  id         String   @id @default(cuid())
+  posOrderId String
+  productId  String
+  quantity   Int
+  unitPrice  Float
+  lineTotal  Float
+  posOrder   PosOrder @relation(fields: [posOrderId], references: [id])
+  product    Product  @relation(fields: [productId], references: [id])
+}
+
+model PosTransaction {
+  id        String   @id @default(cuid())
+  brandId   String
+  amount    Float
+  method    String
+  createdAt DateTime @default(now())
+  brand     Brand    @relation(fields: [brandId], references: [id])
+}
+
+model BazaarEvent {
+  id           String            @id @default(cuid())
+  brandId      String
+  name         String
+  location     String?
+  startDate    DateTime
+  endDate      DateTime?
+  status       String            @default("active")
+  totalRevenue Float             @default(0)
+  createdAt    DateTime          @default(now())
+  brand        Brand             @relation(fields: [brandId], references: [id])
+  posOrders    PosOrder[]
+  inventory    BazaarInventory[]
+}
+
+model BazaarInventory {
+  id        String      @id @default(cuid())
+  eventId   String
+  productId String
+  allocated Int
+  sold      Int         @default(0)
+  returned  Int         @default(0)
+  event     BazaarEvent @relation(fields: [eventId], references: [id])
+  product   Product     @relation(fields: [productId], references: [id])
+}
+
+model Shipment {
+  id             String    @id @default(cuid())
+  brandId        String
+  orderId        String    @unique
+  courier        String
+  trackingNumber String?
+  status         String    @default("created")
+  codAmount      Float     @default(0)
+  codStatus      String    @default("not_applicable")
+  codCollectedAt DateTime?
+  shippingCost   Float     @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  brand          Brand     @relation(fields: [brandId], references: [id])
+  order          Order     @relation(fields: [orderId], references: [id])
+
+  @@index([brandId, status])
+  @@index([trackingNumber])
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  brandId     String
+  category    String
+  amount      Float
+  currency    String   @default("EGP")
+  source      String   @default("manual")
+  notes       String?
+  receiptUrl  String?
+  date        DateTime
+  isRecurring Boolean  @default(false)
+  brand       Brand    @relation(fields: [brandId], references: [id])
+}
+
+model OverheadSettings {
+  id              String @id @default(cuid())
+  brandId         String @unique
+  monthlyRent     Float  @default(0)
+  monthlySalaries Float  @default(0)
+  otherMonthly    Float  @default(0)
+  avgShippingCost Float  @default(0)
+  brand           Brand  @relation(fields: [brandId], references: [id])
+}
+
+model MarketingSnapshot {
+  id           String   @id @default(cuid())
+  brandId      String
+  date         DateTime
+  platform     String
+  campaignId   String?
+  campaignName String?
+  adSetId      String?
+  adId         String?
+  spend        Float
+  revenue      Float
+  roas         Float
+  impressions  Int
+  clicks       Int
+  orders       Int
+  cpm          Float
+  cpc          Float
+  ctr          Float
+  creativeUrl  String?
+  brand        Brand    @relation(fields: [brandId], references: [id])
+
+  @@index([brandId, date])
+  @@index([brandId, platform, date])
+}
+
+model AiInsight {
+  id        String   @id @default(cuid())
+  brandId   String
+  module    String
+  severity  String
+  titleEn   String
+  titleAr   String
+  bodyEn    String
+  bodyAr    String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  brand     Brand    @relation(fields: [brandId], references: [id])
+
+  @@index([brandId, isRead])
+  @@index([brandId, module])
+}

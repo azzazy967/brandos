@@ -1,0 +1,168 @@
+import { Router } from 'express'
+import { z } from 'zod'
+import prisma from '../lib/prisma'
+import { authenticate } from '../middleware/auth'
+
+const router = Router()
+router.use(authenticate)
+
+function getMtdRange() {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), 1)
+  return { start, end: now }
+}
+
+router.get('/summary', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+    const { start, end } = getMtdRange()
+
+    const [orders, expenses, shipments] = await Promise.all([
+      prisma.order.findMany({ where: { brandId, createdAt: { gte: start, lte: end } } }),
+      prisma.expense.findMany({ where: { brandId, date: { gte: start, lte: end } } }),
+      prisma.shipment.findMany({ where: { brandId, codStatus: 'pending' } }),
+    ])
+
+    const posOrders = await prisma.posOrder.findMany({ where: { brandId, createdAt: { gte: start, lte: end } } })
+
+    const revenueMtd = orders.reduce((s, o) => s + o.totalAmount, 0) + posOrders.reduce((s, o) => s + o.finalAmount, 0)
+    const expensesMtd = expenses.reduce((s, e) => s + e.amount, 0)
+    const grossProfit = revenueMtd - expensesMtd
+    const netProfit = grossProfit
+    const marginPct = revenueMtd > 0 ? (grossProfit / revenueMtd) * 100 : 0
+    const codPending = shipments.reduce((s, sh) => s + sh.codAmount, 0)
+
+    res.json({ success: true, data: { revenueMtd, expensesMtd, grossProfit, netProfit, marginPct: Math.round(marginPct * 100) / 100, codPending } })
+  } catch (error) {
+    console.error('Finance summary error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+router.get('/cod', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+    const { status, from, to } = req.query as Record<string, string>
+
+    const where: Record<string, unknown> = { brandId }
+    if (status) where.codStatus = status
+    if (from || to) {
+      where.createdAt = {}
+      if (from) (where.createdAt as Record<string, unknown>).gte = new Date(from)
+      if (to) (where.createdAt as Record<string, unknown>).lte = new Date(to)
+    }
+
+    const shipments = await prisma.shipment.findMany({
+      where,
+      include: { order: { include: { items: true } } },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    const now = Date.now()
+    const enriched = shipments.map((s) => ({
+      ...s,
+      daysSinceShipped: Math.floor((now - new Date(s.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
+    }))
+
+    const totalPending = enriched.filter((s) => s.codStatus === 'pending').reduce((sum, s) => sum + s.codAmount, 0)
+    const { start, end } = getMtdRange()
+    const collectedMtd = enriched.filter((s) => s.codStatus === 'collected' && s.codCollectedAt && new Date(s.codCollectedAt) >= start && new Date(s.codCollectedAt) <= end).reduce((sum, s) => sum + s.codAmount, 0)
+
+    res.json({ success: true, data: { shipments: enriched, totalPending, collectedMtd } })
+  } catch (error) {
+    console.error('COD error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+router.get('/expenses', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+    const { category, from, to, page = '1', limit = '50' } = req.query as Record<string, string>
+
+    const where: Record<string, unknown> = { brandId }
+    if (category) where.category = category
+    if (from || to) {
+      where.date = {}
+      if (from) (where.date as Record<string, unknown>).gte = new Date(from)
+      if (to) (where.date as Record<string, unknown>).lte = new Date(to)
+    }
+
+    const expenses = await prisma.expense.findMany({
+      where,
+      orderBy: { date: 'desc' },
+      skip: (parseInt(page) - 1) * parseInt(limit),
+      take: parseInt(limit),
+    })
+    res.json({ success: true, data: expenses })
+  } catch (error) {
+    console.error('Expenses list error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+const createExpenseSchema = z.object({
+  category: z.enum(['production', 'packaging', 'shipping', 'ads', 'salary', 'rent', 'other']),
+  amount: z.number().positive(),
+  date: z.string(),
+  notes: z.string().optional(),
+  receiptUrl: z.string().url().optional(),
+  isRecurring: z.boolean().optional(),
+})
+
+router.post('/expenses', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+
+    const parsed = createExpenseSchema.safeParse(req.body)
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+
+    const expense = await prisma.expense.create({
+      data: { ...parsed.data, brandId, date: new Date(parsed.data.date), source: 'manual' },
+    })
+    res.status(201).json({ success: true, data: expense })
+  } catch (error) {
+    console.error('Create expense error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+router.get('/profitability', async (req, res) => {
+  try {
+    const { brandId } = req.user!
+    if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+
+    const products = await prisma.product.findMany({
+      where: { brandId },
+      include: {
+        orderItems: { include: { order: true } },
+      },
+    })
+
+    const overhead = await prisma.overheadSettings.findUnique({ where: { brandId } })
+    const avgShipping = overhead?.avgShippingCost ?? 0
+
+    const profitability = products.map((p) => {
+      const unitsSold = p.orderItems.reduce((s, oi) => s + oi.quantity, 0)
+      const revenue = p.orderItems.reduce((s, oi) => s + oi.quantity * oi.unitPrice, 0)
+      const cogs = unitsSold * p.costPrice
+      const shippingTotal = unitsSold * avgShipping
+      const grossProfit = revenue - cogs - shippingTotal
+      const marginPct = revenue > 0 ? (grossProfit / revenue) * 100 : 0
+
+      return { productId: p.id, title: p.title, sku: p.sku, unitsSold, revenue: Math.round(revenue * 100) / 100, cogs: Math.round(cogs * 100) / 100, avgShipping, grossProfit: Math.round(grossProfit * 100) / 100, marginPct: Math.round(marginPct * 100) / 100 }
+    })
+
+    profitability.sort((a, b) => b.marginPct - a.marginPct)
+    res.json({ success: true, data: profitability })
+  } catch (error) {
+    console.error('Profitability error:', error)
+    res.status(500).json({ success: false, error: 'Internal server error' })
+  }
+})
+
+export default router
