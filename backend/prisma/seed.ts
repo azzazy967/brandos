@@ -12,7 +12,7 @@ async function main() {
     create: { name: 'Eagle Fashion', email: 'eagle@brandos.eg', language: 'ar', currency: 'EGP' },
   })
 
-  const passwordHash = await bcrypt.hash('Admin123!', 12)
+  const passwordHash = await bcrypt.hash('pass123', 12)
   await prisma.user.upsert({
     where: { email: 'admin@brandos.eg' },
     update: {},
