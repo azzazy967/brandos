@@ -30,7 +30,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
   }
 
   try {
-    const raw = jwt.verify(token, secret)
+    const raw = jwt.verify(token, secret, { algorithms: ['HS256'] })
     if (typeof raw !== 'object' || !raw || typeof (raw as Record<string, unknown>).id !== 'string' || typeof (raw as Record<string, unknown>).email !== 'string') {
       res.status(401).json({ success: false, error: 'Malformed token' })
       return

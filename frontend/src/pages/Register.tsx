@@ -27,7 +27,7 @@ export default function Register() {
     if (!form.email) errs.email = 'Email is required'
     else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Invalid email'
     if (!form.password) errs.password = 'Password is required'
-    else if (form.password.length < 8) errs.password = 'Min 8 characters'
+    else if (form.password.length < 4) errs.password = 'Min 4 characters'
     if (form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords do not match'
     setErrors(errs)
     return Object.keys(errs).length === 0
@@ -38,12 +38,13 @@ export default function Register() {
     if (!validate()) return
     setLoading(true)
     try {
-      const data = await api.post<RegisterResponse>('/auth/register', {
+      const res = await api.post<{ success: boolean; data: RegisterResponse }>('/auth/register', {
         name: form.name,
         email: form.email,
         password: form.password,
+        brandName: form.name,
       })
-      login(data.token, data.user)
+      login(res.data.token, res.data.user)
       navigate('/onboarding')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Registration failed')

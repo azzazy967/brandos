@@ -30,6 +30,16 @@ const limiter = rateLimit({
 })
 app.use('/api/', limiter)
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+app.use('/api/auth/login', authLimiter)
+app.use('/api/auth/register', authLimiter)
+
 app.use('/api/auth', authRouter)
 app.use('/api/brand', brandRouter)
 app.use('/api/inventory', inventoryRouter)
