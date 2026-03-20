@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DollarSign, ShoppingBag, TrendingUp, Truck, BarChart3, AlertTriangle } from 'lucide-react'
 import {
-  LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+  ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import { KpiCard } from '@/components/shared/KpiCard'
 import { InsightCard } from '@/components/shared/InsightCard'
@@ -116,15 +116,15 @@ export default function Dashboard() {
               <div className="skeleton h-48 rounded" />
             ) : (
               <ResponsiveContainer width="100%" height={200}>
-                <LineChart data={finance?.revenueTrend ?? []}>
+                <ComposedChart data={finance?.revenueTrend ?? []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={d => d.slice(5)} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
                   <Tooltip formatter={(v: number) => formatCurrency(v)} />
                   <Legend />
-                  <Line type="monotone" dataKey="revenue" stroke="#2563EB" strokeWidth={2} dot={false} name="Revenue" />
                   <Bar dataKey="adSpend" fill="#F97316" opacity={0.6} name="Ad Spend" />
-                </LineChart>
+                  <Line type="monotone" dataKey="revenue" stroke="#2563EB" strokeWidth={2} dot={false} name="Revenue" />
+                </ComposedChart>
               </ResponsiveContainer>
             )}
           </CardContent>

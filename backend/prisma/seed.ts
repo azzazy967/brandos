@@ -54,8 +54,19 @@ async function main() {
   // Basics 2025 — tshirts (2) = 2
   // Winter Essentials 2024 — hoodies (1) = 1
   // Extra 2 to round out to 10
+  //
+  // Stock levels are intentionally varied for Restock Planner:
+  //   - [0] White linen M:  LOW stock (3 total) + HIGH velocity → needs urgent restock
+  //   - [3] Beige linen M:  LOW stock (5 total) + HIGH velocity → needs restock
+  //   - [9] Gray hoodie L:  LOW stock (3 total) + HIGH velocity → critical restock
+  //   - [5] Cream pants 32: LOW stock (4 total) + moderate velocity → needs restock
+  //   - Others: healthy stock, some with moderate velocity
+  //
+  // Size distribution is skewed for Size Intelligence:
+  //   Linen Summer 2025: M sells ~3x more than XL, L moderate
+  //   Basics 2025: M sells ~4x more than S
   const products = await prisma.$transaction([
-    // [0] White linen shirt M
+    // [0] White linen shirt M — CRITICALLY LOW stock, high velocity
     prisma.product.create({
       data: {
         brandId: brand.id,
@@ -67,13 +78,13 @@ async function main() {
         color: 'White',
         sellingPrice: 850,
         costPrice: 280,
-        stockWarehouse: 45,
-        stockShopify: 12,
-        stockPhysical: 8,
+        stockWarehouse: 2,
+        stockShopify: 1,
+        stockPhysical: 0,
         lowStockThreshold: 10,
       },
     }),
-    // [1] White linen shirt L
+    // [1] White linen shirt L — moderate stock
     prisma.product.create({
       data: {
         brandId: brand.id,
@@ -91,7 +102,7 @@ async function main() {
         lowStockThreshold: 10,
       },
     }),
-    // [2] White linen shirt XL
+    // [2] White linen shirt XL — healthy stock, low sales
     prisma.product.create({
       data: {
         brandId: brand.id,
@@ -103,13 +114,13 @@ async function main() {
         color: 'White',
         sellingPrice: 850,
         costPrice: 285,
-        stockWarehouse: 22,
-        stockShopify: 7,
-        stockPhysical: 4,
+        stockWarehouse: 35,
+        stockShopify: 10,
+        stockPhysical: 6,
         lowStockThreshold: 10,
       },
     }),
-    // [3] Beige linen shirt M
+    // [3] Beige linen shirt M — LOW stock, high velocity
     prisma.product.create({
       data: {
         brandId: brand.id,
@@ -121,13 +132,13 @@ async function main() {
         color: 'Beige',
         sellingPrice: 850,
         costPrice: 290,
-        stockWarehouse: 20,
-        stockShopify: 7,
-        stockPhysical: 4,
+        stockWarehouse: 3,
+        stockShopify: 1,
+        stockPhysical: 1,
         lowStockThreshold: 10,
       },
     }),
-    // [4] Beige linen shirt L
+    // [4] Beige linen shirt L — moderate stock
     prisma.product.create({
       data: {
         brandId: brand.id,
@@ -145,7 +156,7 @@ async function main() {
         lowStockThreshold: 10,
       },
     }),
-    // [5] Cream linen pants 32  ← Shopify out-of-stock insight
+    // [5] Cream linen pants 32 — LOW stock, Shopify OOS
     prisma.product.create({
       data: {
         brandId: brand.id,
@@ -157,13 +168,13 @@ async function main() {
         color: 'Cream',
         sellingPrice: 1100,
         costPrice: 380,
-        stockWarehouse: 18,
+        stockWarehouse: 3,
         stockShopify: 0,
-        stockPhysical: 3,
+        stockPhysical: 1,
         lowStockThreshold: 8,
       },
     }),
-    // [6] Cream linen pants 34
+    // [6] Cream linen pants 34 — healthy stock, low sales
     prisma.product.create({
       data: {
         brandId: brand.id,
@@ -175,13 +186,13 @@ async function main() {
         color: 'Cream',
         sellingPrice: 1100,
         costPrice: 380,
-        stockWarehouse: 25,
-        stockShopify: 6,
+        stockWarehouse: 35,
+        stockShopify: 8,
         stockPhysical: 6,
         lowStockThreshold: 8,
       },
     }),
-    // [7] Black cotton tee S
+    // [7] Black cotton tee S — healthy stock, low-moderate sales
     prisma.product.create({
       data: {
         brandId: brand.id,
@@ -199,7 +210,7 @@ async function main() {
         lowStockThreshold: 20,
       },
     }),
-    // [8] Black cotton tee M  ← top seller
+    // [8] Black cotton tee M — moderate stock, TOP SELLER
     prisma.product.create({
       data: {
         brandId: brand.id,
@@ -211,13 +222,13 @@ async function main() {
         color: 'Black',
         sellingPrice: 450,
         costPrice: 120,
-        stockWarehouse: 60,
-        stockShopify: 20,
-        stockPhysical: 12,
+        stockWarehouse: 25,
+        stockShopify: 8,
+        stockPhysical: 5,
         lowStockThreshold: 20,
       },
     }),
-    // [9] Gray oversized hoodie L  ← low-stock critical
+    // [9] Gray oversized hoodie L — CRITICALLY LOW stock, high velocity
     prisma.product.create({
       data: {
         brandId: brand.id,
@@ -229,84 +240,110 @@ async function main() {
         color: 'Gray',
         sellingPrice: 1350,
         costPrice: 450,
-        stockWarehouse: 5,
-        stockShopify: 2,
-        stockPhysical: 1,
+        stockWarehouse: 2,
+        stockShopify: 1,
+        stockPhysical: 0,
         lowStockThreshold: 10,
       },
     }),
   ])
 
-  // ─── 4. Orders (15 Shopify) ──────────────────────────────────────────────────
+  // ─── 4. Orders (35 Shopify) ──────────────────────────────────────────────────
+  // Sales velocity targets (units sold in last 30 days):
+  //   products[0] White Linen M:  ~12 units → dailyAvg 0.4 → suggested (0.4×45)−3 = 15
+  //   products[3] Beige Linen M:  ~10 units → dailyAvg 0.33 → suggested (0.33×45)−5 = 10
+  //   products[9] Gray Hoodie L:  ~8 units  → dailyAvg 0.27 → suggested (0.27×45)−3 = 10
+  //   products[5] Cream Pants 32: ~7 units  → dailyAvg 0.23 → suggested (0.23×45)−4 = 7
+  //   products[8] Black Tee M:    ~15 units → dailyAvg 0.5 → suggested (0.5×45)−38 = 0 (healthy)
+  //   products[1] White Linen L:  ~5 units  → moderate
+  //   products[2] White Linen XL: ~2 units  → low (slower size)
+  //   products[4] Beige Linen L:  ~3 units  → moderate
+  //   products[6] Cream Pants 34: ~2 units  → low (slower size)
+  //   products[7] Black Tee S:    ~3 units  → low-moderate
+  //
+  // Size Intelligence distribution (all-time, Linen Summer 2025):
+  //   M (products 0+3): ~22 units → ~42%
+  //   L (products 1+4): ~8 units  → ~15%
+  //   XL (product 2):   ~3 units  → ~6%
+  //   32 (product 5):   ~10 units → ~19%
+  //   34 (product 6):   ~4 units  → ~8%
+  //
+  // Size Intelligence distribution (all-time, Basics 2025):
+  //   M (product 8): ~20 units → ~77%
+  //   S (product 7): ~6 units  → ~23%
   const orders = await prisma.$transaction([
-    // [0] fulfilled / online
+    // ───── Original 15 orders (kept with adjusted products for velocity) ─────
+    // [0] fulfilled / online — 2 days ago — White Linen M + Cream Pants 32
     prisma.order.create({
       data: {
         brandId: brand.id,
         source: 'shopify',
         status: 'fulfilled',
-        totalAmount: 1700,
+        totalAmount: 1950,
         paymentMethod: 'online',
         customerName: 'محمد علي',
         customerPhone: '01012345678',
         createdAt: daysAgo(2),
         items: {
           create: [
-            { productId: products[0].id, quantity: 1, unitPrice: 850 },
-            { productId: products[5].id, quantity: 1, unitPrice: 850 },
+            { productId: products[0].id, quantity: 2, unitPrice: 850 },
+            { productId: products[5].id, quantity: 1, unitPrice: 1100 },
           ],
         },
       },
     }),
-    // [1] fulfilled / online
+    // [1] fulfilled / online — 5 days ago — Black Tee M ×3
     prisma.order.create({
       data: {
         brandId: brand.id,
         source: 'shopify',
         status: 'fulfilled',
-        totalAmount: 900,
+        totalAmount: 1350,
         paymentMethod: 'online',
         customerName: 'فاطمة أحمد',
         customerPhone: '01098765432',
         createdAt: daysAgo(5),
         items: {
-          create: [{ productId: products[8].id, quantity: 2, unitPrice: 450 }],
+          create: [{ productId: products[8].id, quantity: 3, unitPrice: 450 }],
         },
       },
     }),
-    // [2] processing / cod
+    // [2] processing / cod — 1 day ago — Hoodie L ×2
     prisma.order.create({
       data: {
         brandId: brand.id,
         source: 'shopify',
         status: 'processing',
-        totalAmount: 1350,
+        totalAmount: 2700,
         paymentMethod: 'cod',
         customerName: 'عمر حسن',
         customerPhone: '01155667788',
         createdAt: daysAgo(1),
         items: {
-          create: [{ productId: products[9].id, quantity: 1, unitPrice: 1350 }],
+          create: [{ productId: products[9].id, quantity: 2, unitPrice: 1350 }],
         },
       },
     }),
-    // [3] fulfilled / cod  — failed shipment, overdue COD
+    // [3] fulfilled / cod — 18 days ago — Hoodie L + Beige Linen M
     prisma.order.create({
       data: {
         brandId: brand.id,
         source: 'shopify',
         status: 'fulfilled',
-        totalAmount: 1350,
+        totalAmount: 2200,
         paymentMethod: 'cod',
         customerName: 'سارة محمود',
         customerPhone: '01234567890',
         createdAt: daysAgo(18),
         items: {
-          create: [{ productId: products[9].id, quantity: 1, unitPrice: 1350 }],
+          create: [
+            { productId: products[9].id, quantity: 1, unitPrice: 1350 },
+            { productId: products[3].id, quantity: 1, unitPrice: 850 },
+          ],
         },
       },
     }),
-    // [4] fulfilled / online
+    // [4] fulfilled / online — 7 days ago — White Linen L + Black Tee S
     prisma.order.create({
       data: {
         brandId: brand.id,
@@ -325,27 +362,27 @@ async function main() {
         },
       },
     }),
-    // [5] fulfilled / cod — 3-item order
+    // [5] fulfilled / cod — 12 days ago — White Linen M ×2 + Cream Pants 34 + Black Tee M
     prisma.order.create({
       data: {
         brandId: brand.id,
         source: 'shopify',
         status: 'fulfilled',
-        totalAmount: 2400,
+        totalAmount: 3750,
         paymentMethod: 'cod',
         customerName: 'خالد إبراهيم',
         customerPhone: '01066778899',
         createdAt: daysAgo(12),
         items: {
           create: [
-            { productId: products[0].id, quantity: 1, unitPrice: 850 },
+            { productId: products[0].id, quantity: 2, unitPrice: 850 },
             { productId: products[6].id, quantity: 1, unitPrice: 1100 },
             { productId: products[8].id, quantity: 1, unitPrice: 450 },
           ],
         },
       },
     }),
-    // [6] cancelled / cod
+    // [6] cancelled / cod — 20 days ago — Beige Linen M (cancelled still counts as OrderItem)
     prisma.order.create({
       data: {
         brandId: brand.id,
@@ -361,13 +398,13 @@ async function main() {
         },
       },
     }),
-    // [7] fulfilled / online
+    // [7] fulfilled / online — 25 days ago — White Linen XL + Black Tee M
     prisma.order.create({
       data: {
         brandId: brand.id,
         source: 'shopify',
         status: 'fulfilled',
-        totalAmount: 1700,
+        totalAmount: 1300,
         paymentMethod: 'online',
         customerName: 'أحمد طارق',
         customerPhone: '01233445566',
@@ -380,7 +417,7 @@ async function main() {
         },
       },
     }),
-    // [8] fulfilled / cod — returned shipment
+    // [8] fulfilled / cod — 30 days ago — Cream Pants 34
     prisma.order.create({
       data: {
         brandId: brand.id,
@@ -396,13 +433,13 @@ async function main() {
         },
       },
     }),
-    // [9] processing / online
+    // [9] processing / online — 3 days ago — Beige Linen L + Black Tee M ×2
     prisma.order.create({
       data: {
         brandId: brand.id,
         source: 'shopify',
         status: 'processing',
-        totalAmount: 1300,
+        totalAmount: 1750,
         paymentMethod: 'online',
         customerName: 'رامي سامي',
         customerPhone: '01788996655',
@@ -410,12 +447,12 @@ async function main() {
         items: {
           create: [
             { productId: products[4].id, quantity: 1, unitPrice: 850 },
-            { productId: products[8].id, quantity: 1, unitPrice: 450 },
+            { productId: products[8].id, quantity: 2, unitPrice: 450 },
           ],
         },
       },
     }),
-    // [10] fulfilled / cod
+    // [10] fulfilled / cod — 35 days ago — Black Tee S (outside 30d window)
     prisma.order.create({
       data: {
         brandId: brand.id,
@@ -431,7 +468,7 @@ async function main() {
         },
       },
     }),
-    // [11] fulfilled / online — 2-item
+    // [11] fulfilled / online — 40 days ago — White Linen M + Cream Pants 34 (outside 30d)
     prisma.order.create({
       data: {
         brandId: brand.id,
@@ -450,39 +487,39 @@ async function main() {
         },
       },
     }),
-    // [12] fulfilled / cod — Alexandria failed delivery
+    // [12] fulfilled / cod — 8 days ago — Beige Linen M ×2 (Alexandria failed)
     prisma.order.create({
       data: {
         brandId: brand.id,
         source: 'shopify',
         status: 'fulfilled',
-        totalAmount: 850,
+        totalAmount: 1700,
         paymentMethod: 'cod',
         customerName: 'سلمى رضا',
         customerPhone: '01044556677',
         createdAt: daysAgo(8),
         items: {
-          create: [{ productId: products[3].id, quantity: 1, unitPrice: 850 }],
+          create: [{ productId: products[3].id, quantity: 2, unitPrice: 850 }],
         },
       },
     }),
-    // [13] fulfilled / cod — Alexandria failed delivery
+    // [13] fulfilled / cod — 6 days ago — Cream Pants 32 ×2 (Alexandria failed)
     prisma.order.create({
       data: {
         brandId: brand.id,
         source: 'shopify',
         status: 'fulfilled',
-        totalAmount: 1100,
+        totalAmount: 2200,
         paymentMethod: 'cod',
         customerName: 'حسين فتحي',
         customerPhone: '01877665544',
         createdAt: daysAgo(6),
         items: {
-          create: [{ productId: products[5].id, quantity: 1, unitPrice: 1100 }],
+          create: [{ productId: products[5].id, quantity: 2, unitPrice: 1100 }],
         },
       },
     }),
-    // [14] fulfilled / online — 2 items
+    // [14] fulfilled / online — 15 days ago — White Linen L + Black Tee M ×2
     prisma.order.create({
       data: {
         brandId: brand.id,
@@ -497,6 +534,386 @@ async function main() {
           create: [
             { productId: products[1].id, quantity: 1, unitPrice: 850 },
             { productId: products[8].id, quantity: 2, unitPrice: 450 },
+          ],
+        },
+      },
+    }),
+
+    // ───── NEW orders (15-34): boost velocity for restock + size intelligence ─────
+
+    // [15] fulfilled / online — 4 days ago — White Linen M ×3 (big M order)
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 2550,
+        paymentMethod: 'online',
+        customerName: 'تامر فوزي',
+        customerPhone: '01001112233',
+        createdAt: daysAgo(4),
+        items: {
+          create: [{ productId: products[0].id, quantity: 3, unitPrice: 850 }],
+        },
+      },
+    }),
+    // [16] fulfilled / cod — 9 days ago — Beige Linen M ×2 + Cream Pants 32
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 2800,
+        paymentMethod: 'cod',
+        customerName: 'ليلى حسام',
+        customerPhone: '01002223344',
+        createdAt: daysAgo(9),
+        items: {
+          create: [
+            { productId: products[3].id, quantity: 2, unitPrice: 850 },
+            { productId: products[5].id, quantity: 1, unitPrice: 1100 },
+          ],
+        },
+      },
+    }),
+    // [17] fulfilled / online — 11 days ago — Hoodie L ×2 + Black Tee M
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 3150,
+        paymentMethod: 'online',
+        customerName: 'ماجد عصام',
+        customerPhone: '01003334455',
+        createdAt: daysAgo(11),
+        items: {
+          create: [
+            { productId: products[9].id, quantity: 2, unitPrice: 1350 },
+            { productId: products[8].id, quantity: 1, unitPrice: 450 },
+          ],
+        },
+      },
+    }),
+    // [18] fulfilled / online — 14 days ago — White Linen M ×2 + White Linen L
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 2550,
+        paymentMethod: 'online',
+        customerName: 'شيماء عادل',
+        customerPhone: '01004445566',
+        createdAt: daysAgo(14),
+        items: {
+          create: [
+            { productId: products[0].id, quantity: 2, unitPrice: 850 },
+            { productId: products[1].id, quantity: 1, unitPrice: 850 },
+          ],
+        },
+      },
+    }),
+    // [19] fulfilled / cod — 16 days ago — Cream Pants 32 ×2 + Beige Linen M
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 3050,
+        paymentMethod: 'cod',
+        customerName: 'يوسف كمال',
+        customerPhone: '01005556677',
+        createdAt: daysAgo(16),
+        items: {
+          create: [
+            { productId: products[5].id, quantity: 2, unitPrice: 1100 },
+            { productId: products[3].id, quantity: 1, unitPrice: 850 },
+          ],
+        },
+      },
+    }),
+    // [20] fulfilled / online — 19 days ago — Hoodie L + Black Tee M ×2
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 2250,
+        paymentMethod: 'online',
+        customerName: 'إيمان محسن',
+        customerPhone: '01006667788',
+        createdAt: daysAgo(19),
+        items: {
+          create: [
+            { productId: products[9].id, quantity: 1, unitPrice: 1350 },
+            { productId: products[8].id, quantity: 2, unitPrice: 450 },
+          ],
+        },
+      },
+    }),
+    // [21] fulfilled / cod — 22 days ago — White Linen M + Beige Linen L + Black Tee S
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 2150,
+        paymentMethod: 'cod',
+        customerName: 'حازم سيد',
+        customerPhone: '01007778899',
+        createdAt: daysAgo(22),
+        items: {
+          create: [
+            { productId: products[0].id, quantity: 1, unitPrice: 850 },
+            { productId: products[4].id, quantity: 1, unitPrice: 850 },
+            { productId: products[7].id, quantity: 1, unitPrice: 450 },
+          ],
+        },
+      },
+    }),
+    // [22] fulfilled / online — 24 days ago — Beige Linen M ×2 + Cream Pants 32
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 2800,
+        paymentMethod: 'online',
+        customerName: 'ندى عبدالله',
+        customerPhone: '01008889900',
+        createdAt: daysAgo(24),
+        items: {
+          create: [
+            { productId: products[3].id, quantity: 2, unitPrice: 850 },
+            { productId: products[5].id, quantity: 1, unitPrice: 1100 },
+          ],
+        },
+      },
+    }),
+    // [23] fulfilled / online — 26 days ago — White Linen L + Black Tee M ×2
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 1750,
+        paymentMethod: 'online',
+        customerName: 'عبدالرحمن عمر',
+        customerPhone: '01009990011',
+        createdAt: daysAgo(26),
+        items: {
+          create: [
+            { productId: products[1].id, quantity: 1, unitPrice: 850 },
+            { productId: products[8].id, quantity: 2, unitPrice: 450 },
+          ],
+        },
+      },
+    }),
+    // [24] fulfilled / cod — 28 days ago — White Linen XL + Beige Linen L + Cream Pants 34
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 2800,
+        paymentMethod: 'cod',
+        customerName: 'مريم ياسر',
+        customerPhone: '01010001122',
+        createdAt: daysAgo(28),
+        items: {
+          create: [
+            { productId: products[2].id, quantity: 1, unitPrice: 850 },
+            { productId: products[4].id, quantity: 1, unitPrice: 850 },
+            { productId: products[6].id, quantity: 1, unitPrice: 1100 },
+          ],
+        },
+      },
+    }),
+    // [25] fulfilled / online — 3 days ago — White Linen M + Black Tee M
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 1300,
+        paymentMethod: 'online',
+        customerName: 'زينب حسن',
+        customerPhone: '01011112233',
+        createdAt: daysAgo(3),
+        items: {
+          create: [
+            { productId: products[0].id, quantity: 1, unitPrice: 850 },
+            { productId: products[8].id, quantity: 1, unitPrice: 450 },
+          ],
+        },
+      },
+    }),
+    // [26] fulfilled / cod — 10 days ago — Beige Linen M + Black Tee S ×2
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 1750,
+        paymentMethod: 'cod',
+        customerName: 'أمير وجدي',
+        customerPhone: '01012223344',
+        createdAt: daysAgo(10),
+        items: {
+          create: [
+            { productId: products[3].id, quantity: 1, unitPrice: 850 },
+            { productId: products[7].id, quantity: 2, unitPrice: 450 },
+          ],
+        },
+      },
+    }),
+    // [27] fulfilled / online — 17 days ago — White Linen L + Cream Pants 32
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 1950,
+        paymentMethod: 'online',
+        customerName: 'هبة صلاح',
+        customerPhone: '01013334455',
+        createdAt: daysAgo(17),
+        items: {
+          create: [
+            { productId: products[1].id, quantity: 1, unitPrice: 850 },
+            { productId: products[5].id, quantity: 1, unitPrice: 1100 },
+          ],
+        },
+      },
+    }),
+    // [28] fulfilled / cod — 21 days ago — Hoodie L + White Linen M
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 2200,
+        paymentMethod: 'cod',
+        customerName: 'عادل نبيل',
+        customerPhone: '01014445566',
+        createdAt: daysAgo(21),
+        items: {
+          create: [
+            { productId: products[9].id, quantity: 1, unitPrice: 1350 },
+            { productId: products[0].id, quantity: 1, unitPrice: 850 },
+          ],
+        },
+      },
+    }),
+    // [29] fulfilled / online — 6 days ago — Black Tee M ×3 (big M order)
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 1350,
+        paymentMethod: 'online',
+        customerName: 'سامية رشدي',
+        customerPhone: '01015556677',
+        createdAt: daysAgo(6),
+        items: {
+          create: [{ productId: products[8].id, quantity: 3, unitPrice: 450 }],
+        },
+      },
+    }),
+    // [30] fulfilled / cod — 13 days ago — Beige Linen M + White Linen XL
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 1700,
+        paymentMethod: 'cod',
+        customerName: 'وليد جمال',
+        customerPhone: '01016667788',
+        createdAt: daysAgo(13),
+        items: {
+          create: [
+            { productId: products[3].id, quantity: 1, unitPrice: 850 },
+            { productId: products[2].id, quantity: 1, unitPrice: 850 },
+          ],
+        },
+      },
+    }),
+    // [31] fulfilled / online — 2 days ago — Hoodie L + Cream Pants 32
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 2450,
+        paymentMethod: 'online',
+        customerName: 'لمياء حاتم',
+        customerPhone: '01017778899',
+        createdAt: daysAgo(2),
+        items: {
+          create: [
+            { productId: products[9].id, quantity: 1, unitPrice: 1350 },
+            { productId: products[5].id, quantity: 1, unitPrice: 1100 },
+          ],
+        },
+      },
+    }),
+    // [32] fulfilled / online — 23 days ago — White Linen M + Beige Linen L
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 1700,
+        paymentMethod: 'online',
+        customerName: 'أسامة طه',
+        customerPhone: '01018889900',
+        createdAt: daysAgo(23),
+        items: {
+          create: [
+            { productId: products[0].id, quantity: 1, unitPrice: 850 },
+            { productId: products[4].id, quantity: 1, unitPrice: 850 },
+          ],
+        },
+      },
+    }),
+    // [33] fulfilled / cod — 27 days ago — Black Tee M + Cream Pants 34
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 1550,
+        paymentMethod: 'cod',
+        customerName: 'رنا خالد',
+        customerPhone: '01019990011',
+        createdAt: daysAgo(27),
+        items: {
+          create: [
+            { productId: products[8].id, quantity: 1, unitPrice: 450 },
+            { productId: products[6].id, quantity: 1, unitPrice: 1100 },
+          ],
+        },
+      },
+    }),
+    // [34] fulfilled / online — 29 days ago — White Linen M + Beige Linen M + Black Tee S
+    prisma.order.create({
+      data: {
+        brandId: brand.id,
+        source: 'shopify',
+        status: 'fulfilled',
+        totalAmount: 2150,
+        paymentMethod: 'online',
+        customerName: 'جيهان مصطفى',
+        customerPhone: '01020001122',
+        createdAt: daysAgo(29),
+        items: {
+          create: [
+            { productId: products[0].id, quantity: 1, unitPrice: 850 },
+            { productId: products[3].id, quantity: 1, unitPrice: 850 },
+            { productId: products[7].id, quantity: 1, unitPrice: 450 },
           ],
         },
       },
@@ -542,7 +959,7 @@ async function main() {
         courier: 'aramex',
         trackingNumber: 'ARX-2025-10022',
         status: 'created',
-        codAmount: 1350,
+        codAmount: 2700,
         codStatus: 'pending',
         shippingCost: 75,
         createdAt: daysAgo(1),
@@ -556,7 +973,7 @@ async function main() {
         courier: 'bosta',
         trackingNumber: 'BST-2025-20046',
         status: 'failed',
-        codAmount: 1350,
+        codAmount: 2200,
         codStatus: 'pending',
         shippingCost: 60,
         createdAt: daysAgo(18),
@@ -584,7 +1001,7 @@ async function main() {
         courier: 'bosta',
         trackingNumber: 'BST-2025-20047',
         status: 'in_transit',
-        codAmount: 2400,
+        codAmount: 3750,
         codStatus: 'pending',
         shippingCost: 65,
         createdAt: daysAgo(12),
@@ -626,7 +1043,7 @@ async function main() {
         courier: 'aramex',
         trackingNumber: 'ARX-2025-10025',
         status: 'failed',
-        codAmount: 850,
+        codAmount: 1700,
         codStatus: 'pending',
         shippingCost: 85,
         createdAt: daysAgo(8),
@@ -640,7 +1057,7 @@ async function main() {
         courier: 'bosta',
         trackingNumber: 'BST-2025-20049',
         status: 'failed',
-        codAmount: 1100,
+        codAmount: 2200,
         codStatus: 'pending',
         shippingCost: 65,
         createdAt: daysAgo(6),
@@ -839,8 +1256,8 @@ async function main() {
         severity: 'critical',
         titleEn: 'Gray Hoodie L approaching stockout',
         titleAr: 'هوديه رمادي L على وشك النفاد',
-        bodyEn: 'EF-HO-GR-L has only 8 units remaining (5 warehouse, 2 Shopify, 1 physical). At current sales velocity of 3 units/day, stock will deplete within 2–3 days. Place an emergency reorder of at least 50 units immediately.',
-        bodyAr: 'الكود EF-HO-GR-L لديه 8 وحدات فقط متبقية (5 مخزن، 2 شوبيفاي، 1 فيزيائي). بمعدل المبيعات الحالي 3 وحدات/يوم، سينفد المخزون خلال 2–3 أيام. أصدر أمر شراء عاجل بـ 50 وحدة على الأقل فوراً.',
+        bodyEn: 'EF-HO-GR-L has only 3 units remaining (2 warehouse, 1 Shopify, 0 physical). At current sales velocity of ~0.27 units/day, stock will deplete within 11 days. Restock Planner recommends ordering at least 10 units immediately.',
+        bodyAr: 'الكود EF-HO-GR-L لديه 3 وحدات فقط متبقية (2 مخزن، 1 شوبيفاي، 0 فيزيائي). بمعدل المبيعات الحالي ~0.27 وحدة/يوم، سينفد المخزون خلال 11 يوماً. مخطط إعادة التخزين يوصي بطلب 10 وحدات على الأقل فوراً.',
         isRead: false,
       },
     }),
@@ -891,8 +1308,8 @@ async function main() {
         severity: 'info',
         titleEn: 'Black tee XL is your top seller this month',
         titleAr: 'تيشيرت أسود M هو الأكثر مبيعاً هذا الشهر',
-        bodyEn: 'EF-BT-BK-M (Black Cotton Tee M) recorded 8 units sold in the last 30 days, making it your highest-velocity product. Current stock of 92 units is sufficient for ~35 days at this rate. Consider featuring it prominently in Meta ads to capitalise on demand.',
-        bodyAr: 'EF-BT-BK-M سجّل 8 وحدات مباعة في آخر 30 يوماً، مما يجعله منتجك الأعلى تداولاً. المخزون الحالي 92 وحدة يكفي ~35 يوماً بهذا المعدل. فكر في إبرازه في إعلانات ميتا للاستفادة من الطلب.',
+        bodyEn: 'EF-BT-BK-M (Black Cotton Tee M) recorded 19 units sold in the last 30 days, making it your highest-velocity product. Current stock of 38 units is sufficient for ~60 days at this rate. Consider featuring it prominently in Meta ads to capitalise on demand.',
+        bodyAr: 'EF-BT-BK-M سجّل 19 وحدة مباعة في آخر 30 يوماً، مما يجعله منتجك الأعلى تداولاً. المخزون الحالي 38 وحدة يكفي ~60 يوماً بهذا المعدل. فكر في إبرازه في إعلانات ميتا للاستفادة من الطلب.',
         isRead: false,
       },
     }),
@@ -917,8 +1334,8 @@ async function main() {
         severity: 'critical',
         titleEn: 'Linen pants 32 out of stock on Shopify',
         titleAr: 'بنطلون كتان كريمي مقاس 32 نافذ من شوبيفاي',
-        bodyEn: 'EF-LP-CR-32 shows 0 units on Shopify while 18 units sit in the warehouse. This means you are missing online sales opportunities. Update Shopify inventory immediately to push warehouse stock online and capture demand.',
-        bodyAr: 'EF-LP-CR-32 يُظهر 0 وحدات على شوبيفاي بينما 18 وحدة موجودة في المخزن. هذا يعني ضياع فرص مبيعات إلكترونية. حدّث مخزون شوبيفاي فوراً لإتاحة مخزون المستودع على الإنترنت.',
+        bodyEn: 'EF-LP-CR-32 shows 0 units on Shopify while 3 units sit in the warehouse. With 9 units sold in the last 30 days and only 4 total remaining, this product needs urgent restocking. Transfer warehouse stock to Shopify immediately and place a reorder.',
+        bodyAr: 'EF-LP-CR-32 يُظهر 0 وحدات على شوبيفاي بينما 3 وحدات في المخزن. مع بيع 9 وحدات في آخر 30 يوماً و4 وحدات فقط متبقية، هذا المنتج يحتاج إعادة تخزين عاجلة. انقل مخزون المستودع لشوبيفاي فوراً وأصدر أمر شراء.',
         isRead: false,
       },
     }),

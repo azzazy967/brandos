@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
+import prisma from '../lib/prisma'
 
 export interface AuthUser {
   id: string
@@ -36,8 +37,18 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
       return
     }
     const p = raw as Record<string, unknown>
-    req.user = { id: p.id as string, email: p.email as string, brandId: (p.brandId as string) ?? null }
-    next()
+    const userId = p.id as string
+    const email = p.email as string
+
+    // Single-brand system: always fetch the one brand from DB to avoid stale JWT issues
+    prisma.brand.findFirst({ select: { id: true } })
+      .then(brand => {
+        req.user = { id: userId, email, brandId: brand?.id ?? null }
+        next()
+      })
+      .catch(() => {
+        res.status(401).json({ success: false, error: 'Brand not found' })
+      })
   } catch {
     res.status(401).json({ success: false, error: 'Invalid or expired token' })
   }

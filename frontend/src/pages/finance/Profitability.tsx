@@ -21,8 +21,8 @@ export default function Profitability() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get<{ data: ProfitRow[] }>('/finance/profitability')
-      .then(d => setRows(d.data ?? []))
+    api.get<ProfitRow[]>('/finance/profitability')
+      .then(d => setRows(d ?? []))
       .catch(() => toast.error('Failed to load profitability'))
       .finally(() => setLoading(false))
   }, [])

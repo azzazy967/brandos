@@ -22,16 +22,55 @@ router.get('/summary', async (req, res) => {
     const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
     const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59)
 
-    const [orders, expenses, shipments, lastMonthOrders, lastMonthExpenses, lastMonthPos] = await Promise.all([
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    const [orders, expenses, shipments, lastMonthOrders, lastMonthExpenses, lastMonthPos, trendOrders, trendPosOrders, trendSnapshots] = await Promise.all([
       prisma.order.findMany({ where: { brandId, createdAt: { gte: start, lte: end } } }),
       prisma.expense.findMany({ where: { brandId, date: { gte: start, lte: end } } }),
       prisma.shipment.findMany({ where: { brandId, codStatus: 'pending' } }),
       prisma.order.findMany({ where: { brandId, createdAt: { gte: lastMonthStart, lte: lastMonthEnd } } }),
       prisma.expense.findMany({ where: { brandId, date: { gte: lastMonthStart, lte: lastMonthEnd } } }),
       prisma.posOrder.findMany({ where: { brandId, createdAt: { gte: lastMonthStart, lte: lastMonthEnd } } }),
+      prisma.order.findMany({ where: { brandId, createdAt: { gte: thirtyDaysAgo } }, select: { totalAmount: true, createdAt: true } }),
+      prisma.posOrder.findMany({ where: { brandId, createdAt: { gte: thirtyDaysAgo } }, select: { finalAmount: true, createdAt: true } }),
+      prisma.marketingSnapshot.findMany({ where: { brandId, date: { gte: thirtyDaysAgo } }, select: { spend: true, date: true } }),
     ])
 
     const posOrders = await prisma.posOrder.findMany({ where: { brandId, createdAt: { gte: start, lte: end } } })
+
+    // Build revenue trend: daily revenue (orders + POS) vs ad spend (marketing snapshots)
+    const trendMap = new Map<string, { revenue: number; adSpend: number }>()
+
+    // Initialize all 30 days so chart has continuous data points
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000)
+      const key = d.toISOString().slice(0, 10)
+      trendMap.set(key, { revenue: 0, adSpend: 0 })
+    }
+
+    for (const o of trendOrders) {
+      const key = new Date(o.createdAt).toISOString().slice(0, 10)
+      const entry = trendMap.get(key)
+      if (entry) { entry.revenue += o.totalAmount }
+    }
+    for (const p of trendPosOrders) {
+      const key = new Date(p.createdAt).toISOString().slice(0, 10)
+      const entry = trendMap.get(key)
+      if (entry) { entry.revenue += p.finalAmount }
+    }
+    for (const s of trendSnapshots) {
+      const key = new Date(s.date).toISOString().slice(0, 10)
+      const entry = trendMap.get(key)
+      if (entry) { entry.adSpend += s.spend }
+    }
+
+    const revenueTrend = Array.from(trendMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, vals]) => ({
+        date,
+        revenue: Math.round(vals.revenue * 100) / 100,
+        adSpend: Math.round(vals.adSpend * 100) / 100,
+      }))
 
     const revenueMtd = orders.reduce((s, o) => s + o.totalAmount, 0) + posOrders.reduce((s, o) => s + o.finalAmount, 0)
     const expensesMtd = expenses.reduce((s, e) => s + e.amount, 0)
@@ -52,7 +91,7 @@ router.get('/summary', async (req, res) => {
       revenueLastMonth, expensesLastMonth, ordersMtd, ordersLastMonth,
       marginLastMonth: Math.round(marginLastMonth * 100) / 100,
       blendedRoas: 0, beRoas: 0,
-      revenueTrend: [], revenueBreakdown: [], expenseBreakdown: [], plTable: [],
+      revenueTrend, revenueBreakdown: [], expenseBreakdown: [], plTable: [],
     } })
   } catch (error) {
     console.error('Finance summary error:', error)
@@ -66,7 +105,10 @@ router.get('/cod', async (req, res) => {
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
     const { status, from, to } = req.query as Record<string, string>
 
-    const where: Record<string, unknown> = { brandId }
+    const where: Record<string, unknown> = {
+      brandId,
+      codStatus: { not: 'not_applicable' },
+    }
     if (status) where.codStatus = status
     if (from || to) {
       where.createdAt = {}
@@ -76,21 +118,29 @@ router.get('/cod', async (req, res) => {
 
     const shipments = await prisma.shipment.findMany({
       where,
-      include: { order: { include: { items: true } } },
+      include: { order: true },
       orderBy: { createdAt: 'desc' },
     })
 
     const now = Date.now()
-    const enriched = shipments.map((s) => ({
-      ...s,
+    const records = shipments.map((s) => ({
+      id: s.id,
+      orderId: s.orderId,
+      customerName: s.order?.customerName ?? null,
+      amount: s.codAmount,
+      courier: s.courier,
+      shipmentStatus: s.status,
+      codStatus: s.codStatus,
       daysSinceShipped: Math.floor((now - new Date(s.createdAt).getTime()) / (1000 * 60 * 60 * 24)),
+      shippedAt: s.createdAt,
     }))
 
-    const totalPending = enriched.filter((s) => s.codStatus === 'pending').reduce((sum, s) => sum + s.codAmount, 0)
+    const totalPending = records.filter((r) => r.codStatus === 'pending').reduce((sum, r) => sum + r.amount, 0)
+    const totalLost = shipments.filter((s) => s.codStatus === 'lost' || s.status === 'returned').reduce((sum, s) => sum + s.codAmount, 0)
     const { start, end } = getMtdRange()
-    const collectedMtd = enriched.filter((s) => s.codStatus === 'collected' && s.codCollectedAt && new Date(s.codCollectedAt) >= start && new Date(s.codCollectedAt) <= end).reduce((sum, s) => sum + s.codAmount, 0)
+    const totalCollectedMtd = shipments.filter((s) => s.codStatus === 'collected' && s.codCollectedAt && new Date(s.codCollectedAt) >= start && new Date(s.codCollectedAt) <= end).reduce((sum, s) => sum + s.codAmount, 0)
 
-    res.json({ success: true, data: { shipments: enriched, totalPending, collectedMtd } })
+    res.json({ success: true, data: { records, totalPending, totalCollectedMtd, totalLost } })
   } catch (error) {
     console.error('COD error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })

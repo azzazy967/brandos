@@ -14,8 +14,8 @@ export default function Attribution() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get<{ data: AttributionRow[] }>('/marketing/attribution')
-      .then(d => setRows(d.data ?? []))
+    api.get<AttributionRow[]>('/marketing/attribution')
+      .then(d => setRows(d ?? []))
       .catch(() => toast.error('Failed to load attribution'))
       .finally(() => setLoading(false))
   }, [])

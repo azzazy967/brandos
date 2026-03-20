@@ -19,8 +19,8 @@ export default function SizeIntelligence() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get<{ data: CollectionSizes[] }>('/inventory/size-intelligence')
-      .then(d => setCollections(d.data ?? []))
+    api.get<CollectionSizes[]>('/inventory/size-intelligence')
+      .then(d => setCollections(d ?? []))
       .catch(() => toast.error('Failed to load size data'))
       .finally(() => setLoading(false))
   }, [])

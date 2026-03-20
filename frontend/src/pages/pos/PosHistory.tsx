@@ -27,8 +27,8 @@ export default function PosHistory() {
   const [dateTo, setDateTo] = useState('')
 
   useEffect(() => {
-    api.get<{ data: BazaarEvent[] }>('/pos/events')
-      .then(d => setEvents(d.data ?? []))
+    api.get<BazaarEvent[]>('/pos/events')
+      .then(d => setEvents(d ?? []))
       .catch(() => {})
   }, [])
 
@@ -40,8 +40,8 @@ export default function PosHistory() {
     if (dateFrom) params.set('from', dateFrom)
     if (dateTo) params.set('to', dateTo)
 
-    api.get<{ data: PosOrder[] }>(`/pos/orders?${params}`)
-      .then(d => setOrders(d.data ?? []))
+    api.get<PosOrder[]>(`/pos/orders?${params}`)
+      .then(d => setOrders(d ?? []))
       .catch(() => toast.error('Failed to load POS history'))
       .finally(() => setLoading(false))
   }, [eventFilter, paymentFilter, dateFrom, dateTo])

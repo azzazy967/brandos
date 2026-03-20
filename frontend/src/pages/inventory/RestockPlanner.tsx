@@ -19,8 +19,8 @@ export default function RestockPlanner() {
   const [overrides, setOverrides] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    api.get<{ data: RestockItem[] }>('/inventory/restock')
-      .then(d => setItems(d.data ?? []))
+    api.get<RestockItem[]>('/inventory/restock')
+      .then(d => setItems(d ?? []))
       .catch(() => toast.error('Failed to load restock data'))
       .finally(() => setLoading(false))
   }, [])

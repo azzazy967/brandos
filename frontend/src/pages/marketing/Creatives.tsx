@@ -20,8 +20,8 @@ export default function Creatives() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get<{ data: Creative[] }>('/marketing/creatives')
-      .then(d => setCreatives(d.data ?? []))
+    api.get<Creative[]>('/marketing/creatives')
+      .then(d => setCreatives(d ?? []))
       .catch(() => toast.error('Failed to load creatives'))
       .finally(() => setLoading(false))
   }, [])

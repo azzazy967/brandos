@@ -74,7 +74,7 @@ router.get('/restock', async (req, res) => {
       const suggestedQty = Math.max(0, Math.ceil(dailyAvg * 45) - totalStock)
       const daysOfStockLeft = dailyAvg > 0 ? Math.round(totalStock / dailyAvg) : 999
       if (suggestedQty <= 0) return null
-      return { id: p.id, title: p.title, sku: p.sku, size: p.size, color: p.color, currentStock: totalStock, dailyAvg: Math.round(dailyAvg * 10) / 10, suggestedQty, daysOfStockLeft }
+      return { id: p.id, title: p.title, sku: p.sku, collection: p.collection, size: p.size, color: p.color, currentStock: totalStock, avgDailySales: Math.round(dailyAvg * 10) / 10, suggestedQty, daysOfStockLeft }
     }).filter(Boolean)
 
     res.json({ success: true, data: restock })
@@ -94,20 +94,24 @@ router.get('/size-intelligence', async (req, res) => {
       include: { orderItems: true },
     })
 
-    const collections: Record<string, Record<string, number>> = {}
+    const collections: Record<string, Record<string, { sold: number; stock: number }>> = {}
     for (const p of products) {
       if (!p.collection || !p.size) continue
       if (!collections[p.collection]) collections[p.collection] = {}
       const sold = p.orderItems.reduce((s, oi) => s + oi.quantity, 0)
-      collections[p.collection][p.size] = (collections[p.collection][p.size] || 0) + sold
+      const stock = p.stockWarehouse + p.stockShopify + p.stockPhysical
+      if (!collections[p.collection][p.size]) collections[p.collection][p.size] = { sold: 0, stock: 0 }
+      collections[p.collection][p.size].sold += sold
+      collections[p.collection][p.size].stock += stock
     }
 
     const result = Object.entries(collections).map(([collection, sizes]) => {
-      const total = Object.values(sizes).reduce((s, v) => s + v, 0)
-      const sizeData = Object.entries(sizes).map(([size, sold]) => ({
-        size, sold, pct: total > 0 ? Math.round((sold / total) * 100) : 0,
-      })).sort((a, b) => b.sold - a.sold)
-      return { collection, totalSold: total, sizes: sizeData }
+      const totalSold = Object.values(sizes).reduce((s, v) => s + v.sold, 0)
+      const sizeData = Object.entries(sizes).map(([size, data]) => {
+        const sellThroughPct = (data.sold + data.stock) > 0 ? (data.sold / (data.sold + data.stock)) * 100 : 0
+        return { size, unitsSold: data.sold, currentStock: data.stock, sellThroughPct: Math.round(sellThroughPct * 10) / 10 }
+      }).sort((a, b) => b.unitsSold - a.unitsSold)
+      return { collection, totalSold, sizes: sizeData }
     })
 
     res.json({ success: true, data: result })

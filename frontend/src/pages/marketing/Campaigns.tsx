@@ -18,8 +18,8 @@ export default function Campaigns() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get<{ data: Campaign[] }>('/marketing/campaigns')
-      .then(d => setCampaigns(d.data ?? []))
+    api.get<Campaign[]>('/marketing/campaigns')
+      .then(d => setCampaigns(d ?? []))
       .catch(() => toast.error('Failed to load campaigns'))
       .finally(() => setLoading(false))
   }, [])
