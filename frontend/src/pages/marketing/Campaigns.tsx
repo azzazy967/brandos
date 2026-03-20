@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react'
 import { DataTable, ColumnDef } from '@/components/shared/DataTable'
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { BeRoasIndicator } from '@/components/shared/BeRoasIndicator'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { api } from '@/lib/api'
 import { toast } from '@/stores/toast-store'
 import { formatCurrency } from '@/lib/utils'
 
 interface Campaign {
-  id: string; name: string; platform: string; status: string
+  campaignId: string; campaignName: string | null; platform: string
   spend: number; revenue: number; roas: number; orders: number
-  cpa: number; beRoas: number; roasGap: number
+  cpa: number; impressions: number; clicks: number
 }
 
 export default function Campaigns() {
@@ -25,22 +24,17 @@ export default function Campaigns() {
   }, [])
 
   const columns: ColumnDef<Campaign>[] = [
-    { key: 'name', header: 'Campaign', render: c => <p className="font-medium text-sm max-w-xs truncate">{c.name}</p> },
+    { key: 'campaignName', header: 'Campaign', render: c => <p className="font-medium text-sm max-w-xs truncate">{c.campaignName ?? c.campaignId}</p> },
     { key: 'platform', header: 'Platform', render: c => <StatusBadge status={c.platform} /> },
-    { key: 'status', header: 'Status', render: c => <StatusBadge status={c.status} /> },
     { key: 'spend', header: 'Spend', sortable: true, render: c => <span className="font-mono">{formatCurrency(c.spend)}</span> },
     { key: 'revenue', header: 'Revenue', sortable: true, render: c => <span className="font-mono">{formatCurrency(c.revenue)}</span> },
-    { key: 'roas', header: 'ROAS', sortable: true, render: c => <BeRoasIndicator actualRoas={c.roas} beRoas={c.beRoas} showDetails={false} /> },
+    { key: 'roas', header: 'ROAS', sortable: true, render: c => (
+      <span className={`font-mono font-semibold text-sm ${c.roas >= 2 ? 'text-green-600' : c.roas >= 1 ? 'text-amber-600' : 'text-red-600'}`}>
+        {(c.roas ?? 0).toFixed(2)}x
+      </span>
+    )},
     { key: 'orders', header: 'Orders', sortable: true, render: c => <span className="font-mono">{c.orders}</span> },
     { key: 'cpa', header: 'CPA', sortable: true, render: c => <span className="font-mono">{formatCurrency(c.cpa)}</span> },
-    {
-      key: 'roasGap', header: 'BEROAS Gap', sortable: true,
-      render: c => (
-        <span className={`font-mono font-semibold text-sm ${c.roasGap >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-          {c.roasGap >= 0 ? '+' : ''}{c.roasGap.toFixed(2)}x
-        </span>
-      )
-    },
   ]
 
   const filterByPlatform = (plat: string) =>

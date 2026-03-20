@@ -6,9 +6,8 @@ import { toast } from '@/stores/toast-store'
 import { formatPercent } from '@/lib/utils'
 
 interface ReturnRow {
-  id: string; title: string; sku: string
-  unitsSold: number; unitsReturned: number; returnRatePct: number
-  commonReasons: string[]
+  productId: string; title: string; sku: string
+  totalOrders: number; returns: number; returnRate: number
 }
 
 export default function Returns() {
@@ -22,35 +21,28 @@ export default function Returns() {
       .finally(() => setLoading(false))
   }, [])
 
-  const highReturnRows = rows.filter(r => r.returnRatePct > 10)
+  const highReturnRows = rows.filter(r => r.returnRate > 10)
 
   const columns: ColumnDef<ReturnRow>[] = [
     { key: 'title', header: 'Product', render: r => (
       <div className="flex items-center gap-2">
-        {r.returnRatePct > 10 && <AlertTriangle size={14} className="text-red-500 shrink-0" />}
+        {r.returnRate > 10 && <AlertTriangle size={14} className="text-red-500 shrink-0" />}
         <div>
           <p className="font-medium text-sm">{r.title}</p>
           <p className="text-xs font-mono text-slate-400">{r.sku}</p>
         </div>
       </div>
     )},
-    { key: 'unitsSold', header: 'Units Sold', sortable: true, render: r => <span className="font-mono">{r.unitsSold}</span> },
-    { key: 'unitsReturned', header: 'Returns', sortable: true, render: r => <span className="font-mono">{r.unitsReturned}</span> },
-    { key: 'returnRatePct', header: 'Return Rate', sortable: true, render: r => (
-      <span className={`font-semibold ${r.returnRatePct > 10 ? 'text-red-600' : r.returnRatePct > 5 ? 'text-amber-600' : 'text-green-600'}`}>
-        {formatPercent(r.returnRatePct)}
+    { key: 'totalOrders', header: 'Units Sold', sortable: true, render: r => <span className="font-mono">{r.totalOrders}</span> },
+    { key: 'returns', header: 'Returns', sortable: true, render: r => <span className="font-mono">{r.returns}</span> },
+    { key: 'returnRate', header: 'Return Rate', sortable: true, render: r => (
+      <span className={`font-semibold ${r.returnRate > 10 ? 'text-red-600' : r.returnRate > 5 ? 'text-amber-600' : 'text-green-600'}`}>
+        {formatPercent(r.returnRate ?? 0)}
       </span>
-    )},
-    { key: 'commonReasons', header: 'Common Reasons', sortable: false, render: r => (
-      <div className="flex flex-wrap gap-1">
-        {(r.commonReasons ?? []).slice(0, 3).map(reason => (
-          <span key={reason} className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">{reason}</span>
-        ))}
-      </div>
     )},
   ]
 
-  const rowClassName = (row: ReturnRow) => row.returnRatePct > 10 ? 'bg-red-50' : ''
+  const rowClassName = (row: ReturnRow) => row.returnRate > 10 ? 'bg-red-50' : ''
 
   return (
     <div className="space-y-6">
@@ -67,8 +59,8 @@ export default function Returns() {
           </div>
           <div className="flex flex-wrap gap-2">
             {highReturnRows.map(r => (
-              <span key={r.id} className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
-                {r.title} ({formatPercent(r.returnRatePct)})
+              <span key={r.productId} className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                {r.title} ({formatPercent(r.returnRate ?? 0)})
               </span>
             ))}
           </div>

@@ -58,8 +58,8 @@ export default function SizeIntelligence() {
                 <CardHeader>
                   <CardTitle className="text-base">{col.collection}</CardTitle>
                   <div className="flex gap-3 text-xs mt-1">
-                    {topSize && <span className="text-green-600">Top: <strong>{topSize.size}</strong> ({topSize.sellThroughPct.toFixed(0)}%)</span>}
-                    {worstSize && <span className="text-amber-600">Slowest: <strong>{worstSize.size}</strong> ({worstSize.sellThroughPct.toFixed(0)}%)</span>}
+                    {topSize && <span className="text-green-600">Top: <strong>{topSize.size}</strong> ({(topSize.sellThroughPct ?? 0).toFixed(0)}%)</span>}
+                    {worstSize && <span className="text-amber-600">Slowest: <strong>{worstSize.size}</strong> ({(worstSize.sellThroughPct ?? 0).toFixed(0)}%)</span>}
                   </div>
                 </CardHeader>
                 <CardContent>

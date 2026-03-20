@@ -33,7 +33,7 @@ export default function RestockPlanner() {
       Size: item.size ?? '',
       Color: item.color ?? '',
       'Current Stock': item.currentStock,
-      'Avg Daily Sales': item.avgDailySales.toFixed(2),
+      'Avg Daily Sales': (item.avgDailySales ?? 0).toFixed(2),
       'Days of Stock': Math.round(item.daysOfStockLeft),
       'Suggested Qty': overrides[item.id] ?? item.suggestedQty,
     }))
@@ -49,7 +49,7 @@ export default function RestockPlanner() {
       </div>
     )},
     { key: 'currentStock', header: 'Current Stock', sortable: true, render: i => <span className="font-mono">{i.currentStock}</span> },
-    { key: 'avgDailySales', header: 'Avg Daily Sales', sortable: true, render: i => <span className="font-mono">{i.avgDailySales.toFixed(1)}</span> },
+    { key: 'avgDailySales', header: 'Avg Daily Sales', sortable: true, render: i => <span className="font-mono">{(i.avgDailySales ?? 0).toFixed(1)}</span> },
     { key: 'daysOfStockLeft', header: 'Days Left', sortable: true, render: i => (
       <span className={`font-mono font-semibold ${i.daysOfStockLeft <= 7 ? 'text-red-600' : i.daysOfStockLeft <= 14 ? 'text-amber-600' : 'text-green-600'}`}>
         {Math.round(i.daysOfStockLeft)}d

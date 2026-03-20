@@ -102,7 +102,7 @@ export default function InventoryList() {
     { key: 'stockShopify', header: 'Shopify', sortable: true, render: p => <span className="font-mono text-sm">{p.stockShopify}</span> },
     { key: 'stockPhysical', header: 'Physical', sortable: true, render: p => <span className="font-mono text-sm">{p.stockPhysical}</span> },
     { key: 'unitsSold30d', header: 'Sold 30d', sortable: true, render: p => <span className="font-mono text-sm">{p.unitsSold30d}</span> },
-    { key: 'sellThroughPct', header: 'Sell-through', sortable: true, render: p => <span className={`font-mono text-sm ${p.sellThroughPct >= 70 ? 'text-green-600' : p.sellThroughPct >= 40 ? 'text-amber-600' : 'text-red-600'}`}>{p.sellThroughPct.toFixed(1)}%</span> },
+    { key: 'sellThroughPct', header: 'Sell-through', sortable: true, render: p => <span className={`font-mono text-sm ${p.sellThroughPct >= 70 ? 'text-green-600' : p.sellThroughPct >= 40 ? 'text-amber-600' : 'text-red-600'}`}>{(p.sellThroughPct ?? 0).toFixed(1)}%</span> },
     { key: 'daysOfStockLeft', header: 'Days Left', sortable: true, render: p => (
       <span className={`font-mono text-sm font-semibold ${p.daysOfStockLeft <= 7 ? 'text-red-600' : p.daysOfStockLeft <= 14 ? 'text-amber-600' : 'text-green-600'}`}>
         {p.daysOfStockLeft === 0 ? '—' : `${Math.round(p.daysOfStockLeft)}d`}

@@ -1,18 +1,16 @@
 import { useState, useEffect } from 'react'
-import { Image as ImageIcon, Trophy, AlertTriangle } from 'lucide-react'
+import { Image as ImageIcon } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 
 import { StatusBadge } from '@/components/shared/StatusBadge'
-import { BeRoasIndicator } from '@/components/shared/BeRoasIndicator'
 import { api } from '@/lib/api'
 import { toast } from '@/stores/toast-store'
 import { formatCurrency } from '@/lib/utils'
 
 interface Creative {
-  id: string; thumbnailUrl?: string; platform: string
-  spend: number; revenue: number; roas: number; ctr: number
-  beRoas: number; isWinner: boolean; isFatiguing: boolean
-  ctrDropPct?: number
+  adId: string; platform: string; creativeUrl: string | null
+  spend: number; revenue: number; orders: number
+  clicks: number; impressions: number; roas: number; ctr: number
 }
 
 export default function Creatives() {
@@ -52,29 +50,16 @@ export default function Creatives() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {creatives.slice(0, 12).map(creative => (
-            <Card key={creative.id} className="overflow-hidden hover:shadow-lg hover:-translate-y-0.5">
+            <Card key={creative.adId} className="overflow-hidden hover:shadow-lg hover:-translate-y-0.5">
               {/* Thumbnail */}
               <div className="relative aspect-video bg-slate-100">
-                {creative.thumbnailUrl ? (
-                  <img src={creative.thumbnailUrl} alt="Creative" className="w-full h-full object-cover" />
+                {creative.creativeUrl ? (
+                  <img src={creative.creativeUrl} alt="Creative" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <ImageIcon size={32} className="text-slate-300" />
                   </div>
                 )}
-                {/* Badges overlay */}
-                <div className="absolute top-2 left-2 flex flex-col gap-1">
-                  {creative.isWinner && (
-                    <span className="flex items-center gap-1 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full">
-                      <Trophy size={10} /> Winner
-                    </span>
-                  )}
-                  {creative.isFatiguing && (
-                    <span className="flex items-center gap-1 bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                      <AlertTriangle size={10} /> Fatiguing
-                    </span>
-                  )}
-                </div>
                 <div className="absolute top-2 right-2">
                   <StatusBadge status={creative.platform} />
                 </div>
@@ -91,16 +76,18 @@ export default function Creatives() {
                     <p className="font-mono font-semibold">{formatCurrency(creative.revenue)}</p>
                   </div>
                   <div>
+                    <p className="text-slate-500">ROAS</p>
+                    <p className={`font-mono font-semibold ${creative.roas >= 2 ? 'text-green-600' : creative.roas >= 1 ? 'text-amber-600' : 'text-red-600'}`}>
+                      {(creative.roas ?? 0).toFixed(2)}x
+                    </p>
+                  </div>
+                  <div>
                     <p className="text-slate-500">CTR</p>
-                    <p className={`font-mono font-semibold ${creative.isFatiguing ? 'text-orange-600' : 'text-slate-900'}`}>
-                      {creative.ctr.toFixed(2)}%
+                    <p className="font-mono font-semibold text-slate-900">
+                      {(creative.ctr ?? 0).toFixed(2)}%
                     </p>
                   </div>
                 </div>
-                <BeRoasIndicator actualRoas={creative.roas} beRoas={creative.beRoas} />
-                {creative.isFatiguing && creative.ctrDropPct && (
-                  <p className="text-xs text-orange-600">CTR dropped {creative.ctrDropPct.toFixed(0)}% vs last 7d</p>
-                )}
               </CardContent>
             </Card>
           ))}
