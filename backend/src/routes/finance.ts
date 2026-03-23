@@ -86,12 +86,52 @@ router.get('/summary', async (req, res) => {
     const profitLastMonth = revenueLastMonth - expensesLastMonth
     const marginLastMonth = revenueLastMonth > 0 ? (profitLastMonth / revenueLastMonth) * 100 : 0
 
+    // Revenue breakdown by channel for current month
+    const shopifyRevenue = orders.reduce((s, o) => s + o.totalAmount, 0)
+    const posRevenue = posOrders.reduce((s, o) => s + o.finalAmount, 0)
+    const currentMonth = now.toLocaleString('en', { month: 'short', year: 'numeric' })
+    const lastMonthLabel = lastMonthStart.toLocaleString('en', { month: 'short', year: 'numeric' })
+    const lastMonthShopify = lastMonthOrders.reduce((s, o) => s + o.totalAmount, 0)
+    const lastMonthPosRev = lastMonthPos.reduce((s, o) => s + o.finalAmount, 0)
+
+    const revenueBreakdown = [
+      { month: lastMonthLabel, shopify: Math.round(lastMonthShopify), pos: Math.round(lastMonthPosRev), tiktok: 0 },
+      { month: currentMonth, shopify: Math.round(shopifyRevenue), pos: Math.round(posRevenue), tiktok: 0 },
+    ]
+
+    // Expense breakdown by category
+    const expByCat = new Map<string, number>()
+    for (const e of expenses) {
+      expByCat.set(e.category, (expByCat.get(e.category) ?? 0) + e.amount)
+    }
+    const expenseBreakdown = Array.from(expByCat.entries()).map(([category, amount]) => ({
+      category, amount: Math.round(amount),
+    })).sort((a, b) => b.amount - a.amount)
+
+    // Monthly P&L (current + last month)
+    const plTable = [
+      {
+        month: lastMonthLabel,
+        revenue: Math.round(revenueLastMonth),
+        expenses: Math.round(expensesLastMonth),
+        profit: Math.round(revenueLastMonth - expensesLastMonth),
+        marginPct: revenueLastMonth > 0 ? Math.round(((revenueLastMonth - expensesLastMonth) / revenueLastMonth) * 10000) / 100 : 0,
+      },
+      {
+        month: currentMonth,
+        revenue: Math.round(revenueMtd),
+        expenses: Math.round(expensesMtd),
+        profit: Math.round(grossProfit),
+        marginPct: Math.round(marginPct * 100) / 100,
+      },
+    ]
+
     res.json({ success: true, data: {
       revenueMtd, expensesMtd, grossProfit, netProfit, marginPct: Math.round(marginPct * 100) / 100, codPending,
       revenueLastMonth, expensesLastMonth, ordersMtd, ordersLastMonth,
       marginLastMonth: Math.round(marginLastMonth * 100) / 100,
       blendedRoas: 0, beRoas: 0,
-      revenueTrend, revenueBreakdown: [], expenseBreakdown: [], plTable: [],
+      revenueTrend, revenueBreakdown, expenseBreakdown, plTable,
     } })
   } catch (error) {
     console.error('Finance summary error:', error)
@@ -151,7 +191,8 @@ router.get('/expenses', async (req, res) => {
   try {
     const { brandId } = req.user!
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
-    const { category, from, to, page = '1', limit = '50' } = req.query as Record<string, string>
+    const { category, from, to, page = '1', limit: rawLimit = '50' } = req.query as Record<string, string>
+    const parsedLimit = Math.min(parseInt(rawLimit) || 50, 500)
 
     const where: Record<string, unknown> = { brandId }
     if (category) where.category = category
@@ -164,8 +205,8 @@ router.get('/expenses', async (req, res) => {
     const expenses = await prisma.expense.findMany({
       where,
       orderBy: { date: 'desc' },
-      skip: (parseInt(page) - 1) * parseInt(limit),
-      take: parseInt(limit),
+      skip: (parseInt(page) - 1) * parsedLimit,
+      take: parsedLimit,
     })
     res.json({ success: true, data: { data: expenses, trend: [] } })
   } catch (error) {
@@ -210,21 +251,31 @@ router.get('/profitability', async (req, res) => {
       where: { brandId },
       include: {
         orderItems: { include: { order: true } },
+        posOrderItems: { include: { posOrder: true } },
       },
     })
 
     const overhead = await prisma.overheadSettings.findUnique({ where: { brandId } })
     const avgShipping = overhead?.avgShippingCost ?? 0
 
+    // Filter to current month for consistency with dashboard/finance summary
+    const now = new Date()
+    const mtdStart = new Date(now.getFullYear(), now.getMonth(), 1)
+
     const profitability = products.map((p) => {
-      const unitsSold = p.orderItems.reduce((s, oi) => s + oi.quantity, 0)
-      const revenue = p.orderItems.reduce((s, oi) => s + oi.quantity * oi.unitPrice, 0)
+      const mtdItems = p.orderItems.filter(oi => new Date(oi.order.createdAt) >= mtdStart)
+      const mtdPosItems = p.posOrderItems.filter(pi => new Date(pi.posOrder.createdAt) >= mtdStart)
+      const unitsSold = mtdItems.reduce((s, oi) => s + oi.quantity, 0) + mtdPosItems.reduce((s, pi) => s + pi.quantity, 0)
+      const revenue = mtdItems.reduce((s, oi) => s + oi.quantity * oi.unitPrice, 0) + mtdPosItems.reduce((s, pi) => s + pi.lineTotal, 0)
       const cogs = unitsSold * p.costPrice
       const shippingTotal = unitsSold * avgShipping
       const grossProfit = revenue - cogs - shippingTotal
       const marginPct = revenue > 0 ? (grossProfit / revenue) * 100 : 0
 
-      return { productId: p.id, title: p.title, sku: p.sku, unitsSold, revenue: Math.round(revenue * 100) / 100, cogs: Math.round(cogs * 100) / 100, avgShipping, grossProfit: Math.round(grossProfit * 100) / 100, marginPct: Math.round(marginPct * 100) / 100 }
+      // Ad spend attribution from marketing snapshots (MTD)
+      const adAttribution = 0 // TODO: compute from MarketingSnapshot when campaign-level attribution is linked
+
+      return { id: p.id, title: p.title, sku: p.sku, unitsSold, revenue: Math.round(revenue * 100) / 100, cogs: Math.round(cogs * 100) / 100, avgShipping, adAttribution, grossProfit: Math.round(grossProfit * 100) / 100, marginPct: Math.round(marginPct * 100) / 100 }
     })
 
     profitability.sort((a, b) => b.marginPct - a.marginPct)
