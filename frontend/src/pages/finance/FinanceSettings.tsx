@@ -50,8 +50,8 @@ export default function FinanceSettings() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Finance Settings</h1>
-        <p className="text-slate-500 text-sm mt-1">Configure overhead costs that feed the BEROAS engine</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Finance Settings</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Configure overhead costs that feed the BEROAS engine</p>
       </div>
 
       <Card>
@@ -72,26 +72,26 @@ export default function FinanceSettings() {
                   <Input label="Avg Shipping Cost (EGP)" type="number" value={settings.avgShippingCost} onChange={e => update('avgShippingCost', e.target.value)} min="0" step="0.01" />
                 </div>
 
-                <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 space-y-2">
-                  <p className="text-sm font-semibold text-blue-800">BEROAS Preview</p>
+                <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 space-y-2">
+                  <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">BEROAS Preview</p>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <p className="text-blue-600">Total Monthly Overhead</p>
-                      <p className="font-mono font-bold text-blue-900">EGP {totalMonthly.toLocaleString()}</p>
+                      <p className="text-blue-600 dark:text-blue-400">Total Monthly Overhead</p>
+                      <p className="font-mono font-bold text-blue-900 dark:text-blue-200">EGP {totalMonthly.toLocaleString()}</p>
                     </div>
                     <div>
-                      <label className="text-blue-600 block">Units Sold This Month</label>
+                      <label className="text-blue-600 dark:text-blue-400 block">Units Sold This Month</label>
                       <input
                         type="number"
                         value={unitsSold}
                         onChange={e => setUnitsSold(e.target.value)}
-                        className="w-full mt-1 h-8 px-2 rounded border border-blue-300 text-sm focus:outline-none focus:border-blue-500"
+                        className="w-full mt-1 h-8 px-2 rounded border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-800 text-sm focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 dark:text-slate-100"
                         min="1"
                       />
                     </div>
                     <div>
-                      <p className="text-blue-600">Overhead per Unit</p>
-                      <p className="font-mono font-bold text-blue-900">EGP {overheadPerUnit.toFixed(2)}</p>
+                      <p className="text-blue-600 dark:text-blue-400">Overhead per Unit</p>
+                      <p className="font-mono font-bold text-blue-900 dark:text-blue-200">EGP {overheadPerUnit.toFixed(2)}</p>
                     </div>
                   </div>
                 </div>

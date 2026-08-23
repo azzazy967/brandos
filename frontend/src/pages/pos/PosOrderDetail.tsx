@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Printer } from 'lucide-react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import { ArrowLeft, Printer, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Receipt } from '@/components/pos/Receipt'
 import { api } from '@/lib/api'
@@ -40,7 +40,7 @@ export default function PosOrderDetail() {
     )
   }
 
-  if (!order) return <div className="text-center py-16 text-slate-500">Order not found</div>
+  if (!order) return <div className="text-center py-16 text-slate-500 dark:text-slate-400">Order not found</div>
 
   const receiptData = {
     orderNumber: order.orderNumber,
@@ -62,11 +62,24 @@ export default function PosOrderDetail() {
 
   return (
     <div className="space-y-6 max-w-lg">
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400 no-print">
+        <Link to="/pos" className="hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+          POS
+        </Link>
+        <ChevronRight size={14} className="shrink-0" />
+        <Link to="/pos/history" className="hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+          History
+        </Link>
+        <ChevronRight size={14} className="shrink-0" />
+        <span className="text-slate-900 dark:text-slate-100 font-medium truncate">Order #{order.orderNumber}</span>
+      </nav>
+
       <div className="flex items-center gap-4 no-print">
         <Button variant="ghost" size="icon" onClick={() => navigate('/pos/history')}>
           <ArrowLeft size={18} />
         </Button>
-        <h1 className="text-xl font-bold text-slate-900">{order.orderNumber}</h1>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{order.orderNumber}</h1>
         <Button variant="outline" onClick={() => window.print()} className="ml-auto gap-2">
           <Printer size={16} />
           Print

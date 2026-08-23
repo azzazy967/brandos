@@ -5,7 +5,7 @@ import prisma from '../lib/prisma'
 const router = Router()
 
 function verifyWebhookSignature(req: Request, secret: string | undefined, headerName: string): boolean {
-  if (!secret) return true // Skip verification if secret not configured
+  if (!secret) return false // Reject if secret not configured
   const signature = req.headers[headerName] as string | undefined
   if (!signature) return false
   const expected = crypto.createHmac('sha256', secret).update(JSON.stringify(req.body)).digest('hex')

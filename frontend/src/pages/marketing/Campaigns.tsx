@@ -29,7 +29,7 @@ export default function Campaigns() {
     { key: 'spend', header: 'Spend', sortable: true, render: c => <span className="font-mono">{formatCurrency(c.spend)}</span> },
     { key: 'revenue', header: 'Revenue', sortable: true, render: c => <span className="font-mono">{formatCurrency(c.revenue)}</span> },
     { key: 'roas', header: 'ROAS', sortable: true, render: c => (
-      <span className={`font-mono font-semibold text-sm ${c.roas >= 2 ? 'text-green-600' : c.roas >= 1 ? 'text-amber-600' : 'text-red-600'}`}>
+      <span className={`font-mono font-semibold text-sm ${c.roas >= 2 ? 'text-green-600 dark:text-green-400' : c.roas >= 1 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
         {(c.roas ?? 0).toFixed(2)}x
       </span>
     )},
@@ -43,8 +43,8 @@ export default function Campaigns() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Campaigns</h1>
-        <p className="text-slate-500 text-sm mt-1">Campaign performance with BEROAS gap analysis</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Campaigns</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Campaign performance with BEROAS gap analysis</p>
       </div>
 
       <Tabs defaultValue="all">

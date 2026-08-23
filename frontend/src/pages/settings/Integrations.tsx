@@ -6,7 +6,6 @@ import { Modal } from '@/components/ui/modal'
 import { Card } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import { toast } from '@/stores/toast-store'
-import { formatDateTime } from '@/lib/utils'
 
 interface Integration {
   id: string; type: string; status: string; lastSyncedAt?: string
@@ -45,6 +44,17 @@ const INTEGRATIONS: IntegrationConfig[] = [
     fields: [{ key: 'apiKey', label: 'API Key', type: 'password', placeholder: 'bosta_xxxxxxxx' }],
   },
 ]
+
+function timeAgo(dateStr: string): string {
+  const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
+  if (seconds < 60) return 'just now'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `${days}d ago`
+}
 
 export default function Integrations() {
   const [integrations, setIntegrations] = useState<Integration[]>([])
@@ -99,8 +109,8 @@ export default function Integrations() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Integrations</h1>
-        <p className="text-slate-500 text-sm mt-1">Connect your data sources to power Brand OS analytics</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Integrations</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Connect your data sources to power Brand OS analytics</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -112,19 +122,40 @@ export default function Integrations() {
           return (
             <Card key={config.key} className="p-5">
               <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-slate-50 shrink-0">
-                  <config.icon size={24} className="text-slate-600" />
+                <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 shrink-0">
+                  <config.icon size={24} className="text-slate-600 dark:text-slate-400" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-bold text-slate-900">{config.label}</h3>
-                    {isConnected && <CheckCircle size={16} className="text-green-500" />}
-                    {hasError && <XCircle size={16} className="text-red-500" />}
-                    {!integration && <span className="text-xs text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Not connected</span>}
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100">{config.label}</h3>
+                    {/* Connection health indicator */}
+                    {isConnected && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+                        </span>
+                        <CheckCircle size={16} className="text-green-500" />
+                      </span>
+                    )}
+                    {hasError && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-full bg-red-500" />
+                        <XCircle size={16} className="text-red-500" />
+                      </span>
+                    )}
+                    {!integration && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2.5 w-2.5 rounded-full bg-slate-300 dark:bg-slate-600" />
+                        <span className="text-xs text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full">Not connected</span>
+                      </span>
+                    )}
                   </div>
-                  <p className="text-sm text-slate-500 mb-3">{config.description}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">{config.description}</p>
                   {integration?.lastSyncedAt && (
-                    <p className="text-xs text-slate-400 mb-3">Last sync: {formatDateTime(integration.lastSyncedAt)}</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">
+                      Last synced: {timeAgo(integration.lastSyncedAt)}
+                    </p>
                   )}
                   <div className="flex gap-2 flex-wrap">
                     {isConnected ? (
@@ -141,7 +172,7 @@ export default function Integrations() {
                         <Button
                           variant="ghost" size="sm"
                           onClick={() => handleDisconnect(config.key)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20"
                         >
                           Disconnect
                         </Button>

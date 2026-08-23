@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/modal'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { api } from '@/lib/api'
 import { toast } from '@/stores/toast-store'
+import { useThemeStore } from '@/stores/theme-store'
 import { formatCurrency, formatDate } from '@/lib/utils'
 
 interface Expense {
@@ -20,6 +21,7 @@ interface Expense {
 const CATEGORIES = ['production','packaging','shipping','ads','salary','rent','other']
 
 export default function Expenses() {
+  const { resolved } = useThemeStore()
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
@@ -65,20 +67,20 @@ export default function Expenses() {
     { key: 'category', header: 'Category', render: e => <StatusBadge status={e.category} /> },
     { key: 'amount', header: 'Amount', sortable: true, render: e => <span className="font-mono font-semibold">{formatCurrency(e.amount)}</span> },
     { key: 'source', header: 'Source', render: e => (
-      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${e.source === 'manual' ? 'bg-slate-100 text-slate-600' : 'bg-blue-100 text-blue-600'}`}>
+      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${e.source === 'manual' ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'}`}>
         {e.source === 'manual' ? 'Manual' : 'Auto'}
       </span>
     )},
-    { key: 'isRecurring', header: 'Recurring', render: e => e.isRecurring ? <span className="text-xs text-green-600 font-medium">Yes</span> : <span className="text-xs text-slate-400">No</span> },
-    { key: 'notes', header: 'Notes', render: e => <span className="text-sm text-slate-500">{e.notes ?? '—'}</span> },
+    { key: 'isRecurring', header: 'Recurring', render: e => e.isRecurring ? <span className="text-xs text-green-600 dark:text-green-400 font-medium">Yes</span> : <span className="text-xs text-slate-400">No</span> },
+    { key: 'notes', header: 'Notes', render: e => <span className="text-sm text-slate-500 dark:text-slate-400">{e.notes ?? '—'}</span> },
   ]
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Expenses</h1>
-          <p className="text-slate-500 text-sm mt-1">Track and manage all business expenses</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Expenses</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Track and manage all business expenses</p>
         </div>
         <Button onClick={() => setShowModal(true)} className="gap-2">
           <Plus size={16} />
@@ -92,7 +94,7 @@ export default function Expenses() {
           <CardContent>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={trend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
+                <CartesianGrid strokeDasharray="3 3" stroke={resolved === 'dark' ? '#334155' : '#F1F5F9'} />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
                 <Tooltip formatter={(v: number) => formatCurrency(v)} />
@@ -126,7 +128,7 @@ export default function Expenses() {
           <Input label="Notes (optional)" value={form.notes} onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} placeholder="e.g. July rent payment" />
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.isRecurring} onChange={e => setForm(f => ({ ...f, isRecurring: e.target.checked }))} className="rounded" />
-            <span className="text-sm text-slate-700">Recurring (auto-creates monthly)</span>
+            <span className="text-sm text-slate-700 dark:text-slate-300">Recurring (auto-creates monthly)</span>
           </label>
           <div className="flex gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setShowModal(false)} className="flex-1">Cancel</Button>

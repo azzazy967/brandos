@@ -2,10 +2,12 @@ import { Router } from 'express'
 import { z } from 'zod'
 import prisma from '../lib/prisma'
 import { authenticate } from '../middleware/auth'
+import { requireMinRole } from '../middleware/rbac'
 import { encrypt, decrypt } from '../lib/encryption'
 
 const router = Router()
 router.use(authenticate)
+router.use(requireMinRole('admin'))
 
 router.get('/overhead', async (req, res) => {
   try {
@@ -93,12 +95,17 @@ router.post('/integrations', async (req, res) => {
   }
 })
 
+const VALID_INTEGRATION_TYPES = ['shopify', 'windsor', 'aramex', 'bosta'] as const
+
 router.post('/integrations/:type', async (req, res) => {
   try {
     const { brandId } = req.user!
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
-    const typeParam = req.params.type as 'shopify' | 'windsor' | 'aramex' | 'bosta'
+    const typeParam = req.params.type
+    if (!VALID_INTEGRATION_TYPES.includes(typeParam as typeof VALID_INTEGRATION_TYPES[number])) {
+      res.status(400).json({ success: false, error: `Invalid integration type. Must be one of: ${VALID_INTEGRATION_TYPES.join(', ')}` }); return
+    }
     const credentialsSchema = z.record(z.string())
     const parsedCreds = credentialsSchema.safeParse(req.body)
     if (!parsedCreds.success) { res.status(400).json({ success: false, error: 'Invalid credentials' }); return }
@@ -115,6 +122,11 @@ router.delete('/integrations/:type', async (req, res) => {
   try {
     const { brandId } = req.user!
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
+
+    if (!VALID_INTEGRATION_TYPES.includes(req.params.type as typeof VALID_INTEGRATION_TYPES[number])) {
+      res.status(400).json({ success: false, error: `Invalid integration type. Must be one of: ${VALID_INTEGRATION_TYPES.join(', ')}` }); return
+    }
+
     const result = await prisma.integration.findFirst({ where: { type: req.params.type, brandId } })
     if (!result) { res.status(404).json({ success: false, error: 'Integration not found' }); return }
 

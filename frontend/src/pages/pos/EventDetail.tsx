@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, X as CloseIcon, Printer, MapPin, Calendar } from 'lucide-react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import { ArrowLeft, X as CloseIcon, Printer, MapPin, Calendar, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -56,25 +56,38 @@ export default function EventDetail() {
     )
   }
 
-  if (!event) return <div className="text-center py-16 text-slate-500">Event not found</div>
+  if (!event) return <div className="text-center py-16 text-slate-500 dark:text-slate-400">Event not found</div>
 
   return (
     <div className="space-y-6">
+      {/* Breadcrumbs */}
+      <nav className="flex items-center gap-1.5 text-sm text-slate-500 dark:text-slate-400">
+        <Link to="/pos" className="hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+          POS
+        </Link>
+        <ChevronRight size={14} className="shrink-0" />
+        <Link to="/pos/events" className="hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+          Events
+        </Link>
+        <ChevronRight size={14} className="shrink-0" />
+        <span className="text-slate-900 dark:text-slate-100 font-medium truncate">{event.name}</span>
+      </nav>
+
       <div className="flex items-center gap-4 flex-wrap">
         <Button variant="ghost" size="icon" onClick={() => navigate('/pos/events')}>
           <ArrowLeft size={18} />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-slate-900">{event.name}</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{event.name}</h1>
           <div className="flex items-center gap-3 mt-1 flex-wrap">
             <StatusBadge status={event.status} />
             {event.location && (
-              <span className="flex items-center gap-1 text-sm text-slate-500">
+              <span className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
                 <MapPin size={13} />
                 {event.location}
               </span>
             )}
-            <span className="flex items-center gap-1 text-sm text-slate-500">
+            <span className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400">
               <Calendar size={13} />
               {formatDate(event.startDate)}
               {event.endDate && ` → ${formatDate(event.endDate)}`}
@@ -98,20 +111,20 @@ export default function EventDetail() {
       {/* Summary KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="p-4 text-center">
-          <p className="text-xs text-slate-500">Total Revenue</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Total Revenue</p>
           <p className="text-2xl font-bold font-mono text-[#2563EB]">{formatCurrency(event.totalRevenue)}</p>
         </Card>
         <Card className="p-4 text-center">
-          <p className="text-xs text-slate-500">Orders</p>
-          <p className="text-2xl font-bold font-mono text-slate-900">{event.orderCount}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Orders</p>
+          <p className="text-2xl font-bold font-mono text-slate-900 dark:text-slate-100">{event.orderCount}</p>
         </Card>
         <Card className="p-4 text-center">
-          <p className="text-xs text-slate-500">Items Allocated</p>
-          <p className="text-2xl font-bold font-mono text-slate-900">{event.inventory.reduce((s, i) => s + i.allocated, 0)}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Items Allocated</p>
+          <p className="text-2xl font-bold font-mono text-slate-900 dark:text-slate-100">{event.inventory.reduce((s, i) => s + i.allocated, 0)}</p>
         </Card>
         <Card className="p-4 text-center">
-          <p className="text-xs text-slate-500">Items Sold</p>
-          <p className="text-2xl font-bold font-mono text-green-600">{event.inventory.reduce((s, i) => s + i.sold, 0)}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">Items Sold</p>
+          <p className="text-2xl font-bold font-mono text-green-600 dark:text-green-400">{event.inventory.reduce((s, i) => s + i.sold, 0)}</p>
         </Card>
       </div>
 
@@ -124,14 +137,14 @@ export default function EventDetail() {
               <div className="space-y-3">
                 {event.topSellers.slice(0, 5).map((item, idx) => (
                   <div key={item.sku} className="flex items-center gap-3">
-                    <span className="h-6 w-6 rounded-full bg-blue-50 text-blue-600 text-xs font-bold flex items-center justify-center shrink-0">{idx + 1}</span>
+                    <span className="h-6 w-6 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center shrink-0">{idx + 1}</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{item.title}</p>
-                      <p className="text-xs text-slate-400 font-mono">{item.sku}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">{item.sku}</p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="text-sm font-bold font-mono">{formatCurrency(item.revenue)}</p>
-                      <p className="text-xs text-slate-500">{item.sold} units</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.sold} units</p>
                     </div>
                   </div>
                 ))}
@@ -150,7 +163,7 @@ export default function EventDetail() {
                     <span className="text-sm font-medium capitalize">{p.method}</span>
                     <div className="text-right">
                       <p className="font-mono font-bold">{formatCurrency(p.amount)}</p>
-                      <p className="text-xs text-slate-500">{p.count} transactions</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{p.count} transactions</p>
                     </div>
                   </div>
                 ))}
@@ -166,25 +179,25 @@ export default function EventDetail() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-100">
+              <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700">
                 <tr>
                   {['Product', 'SKU', 'Allocated', 'Sold', 'Returned', 'Leftover'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase">{h}</th>
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
                 {event.inventory.map(item => (
-                  <tr key={item.productId} className="hover:bg-slate-50">
+                  <tr key={item.productId} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                     <td className="px-4 py-3">
                       <p className="font-medium">{item.title}</p>
-                      {(item.size || item.color) && <p className="text-xs text-slate-400">{[item.size, item.color].filter(Boolean).join(' · ')}</p>}
+                      {(item.size || item.color) && <p className="text-xs text-slate-400 dark:text-slate-500">{[item.size, item.color].filter(Boolean).join(' · ')}</p>}
                     </td>
                     <td className="px-4 py-3 font-mono text-xs">{item.sku}</td>
                     <td className="px-4 py-3 font-mono">{item.allocated}</td>
-                    <td className="px-4 py-3 font-mono text-green-600 font-semibold">{item.sold}</td>
+                    <td className="px-4 py-3 font-mono text-green-600 dark:text-green-400 font-semibold">{item.sold}</td>
                     <td className="px-4 py-3 font-mono">{item.returned}</td>
-                    <td className="px-4 py-3 font-mono text-amber-600">{item.leftover}</td>
+                    <td className="px-4 py-3 font-mono text-amber-600 dark:text-amber-400">{item.leftover}</td>
                   </tr>
                 ))}
               </tbody>

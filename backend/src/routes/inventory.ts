@@ -11,8 +11,9 @@ router.get('/', async (req, res) => {
     const { brandId } = req.user!
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
-    const { search, collection, status, page = '1', limit = '50' } = req.query as Record<string, string>
-    const skip = (parseInt(page) - 1) * parseInt(limit)
+    const { search, collection, status, page = '1', limit: rawLimit = '50' } = req.query as Record<string, string>
+    const parsedLimit = Math.min(parseInt(rawLimit) || 50, 500)
+    const skip = (parseInt(page) - 1) * parsedLimit
 
     const where: Record<string, unknown> = { brandId }
     if (search) where.OR = [{ title: { contains: search, mode: 'insensitive' } }, { sku: { contains: search, mode: 'insensitive' } }]
@@ -21,7 +22,7 @@ router.get('/', async (req, res) => {
     const products = await prisma.product.findMany({
       where,
       skip,
-      take: parseInt(limit),
+      take: parsedLimit,
       include: { orderItems: { include: { order: true } } },
     })
 

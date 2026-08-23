@@ -15,14 +15,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp
         className={cn(
-          'inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none',
+          'inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none dark:focus-visible:ring-offset-slate-900',
           {
             'default': 'bg-[#F97316] text-white hover:opacity-90 hover:-translate-y-px focus-visible:ring-[#F97316] shadow-md',
             'secondary': 'bg-transparent text-[#2563EB] border-2 border-[#2563EB] hover:bg-[#2563EB] hover:text-white focus-visible:ring-[#2563EB]',
             'destructive': 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600 shadow-md',
-            'ghost': 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-slate-400',
+            'ghost': 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 focus-visible:ring-slate-400',
             'link': 'text-[#2563EB] underline-offset-4 hover:underline focus-visible:ring-[#2563EB]',
-            'outline': 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus-visible:ring-slate-400 shadow-sm',
+            'outline': 'border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 focus-visible:ring-slate-400 shadow-sm',
           }[variant],
           {
             'default': 'h-10 px-6 py-2 text-sm rounded-lg',

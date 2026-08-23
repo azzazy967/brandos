@@ -8,7 +8,7 @@ const router = Router()
 
 const registerSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(4),
+  password: z.string().min(8),
   name: z.string().optional(),
   brandName: z.string().min(1),
 })
@@ -18,7 +18,7 @@ const loginSchema = z.object({
   password: z.string(),
 })
 
-function signToken(payload: { id: string; email: string; brandId: string | null }): string {
+function signToken(payload: { id: string; email: string; brandId: string | null; role: string }): string {
   const secret = process.env.JWT_SECRET
   if (!secret) throw new Error('JWT_SECRET not configured')
   return jwt.sign(payload, secret, { expiresIn: '7d' })
@@ -51,8 +51,8 @@ router.post('/register', async (req, res) => {
       return { brand, user }
     })
 
-    const token = signToken({ id: user.id, email: user.email, brandId: brand.id })
-    res.status(201).json({ success: true, data: { token, user: { id: user.id, email: user.email, name: user.name, brandId: brand.id } } })
+    const token = signToken({ id: user.id, email: user.email, brandId: brand.id, role: 'owner' })
+    res.status(201).json({ success: true, data: { token, user: { id: user.id, email: user.email, name: user.name, brandId: brand.id, role: 'owner' } } })
   } catch (error) {
     console.error('Register error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })
@@ -80,8 +80,8 @@ router.post('/login', async (req, res) => {
       return
     }
 
-    const token = signToken({ id: user.id, email: user.email, brandId: user.brandId })
-    res.json({ success: true, data: { token, user: { id: user.id, email: user.email, name: user.name, brandId: user.brandId } } })
+    const token = signToken({ id: user.id, email: user.email, brandId: user.brandId, role: user.role })
+    res.json({ success: true, data: { token, user: { id: user.id, email: user.email, name: user.name, brandId: user.brandId, role: user.role } } })
   } catch (error) {
     console.error('Login error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })

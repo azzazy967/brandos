@@ -15,9 +15,9 @@ export function BeRoasIndicator({ actualRoas, beRoas, showDetails = true, classN
 
 
   const config = {
-    above: { color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', label: 'Above BEROAS', Icon: TrendingUp },
-    near: { color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200', label: 'Near BEROAS', Icon: Minus },
-    below: { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', label: 'Below BEROAS', Icon: TrendingDown },
+    above: { color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/30', border: 'border-green-200 dark:border-green-800', label: 'Above BEROAS', Icon: TrendingUp },
+    near: { color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/30', border: 'border-amber-200 dark:border-amber-800', label: 'Near BEROAS', Icon: Minus },
+    below: { color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/30', border: 'border-red-200 dark:border-red-800', label: 'Below BEROAS', Icon: TrendingDown },
   }[status]
 
   const StatusIcon = config.Icon
@@ -48,7 +48,7 @@ export function BeroasBar({ actualRoas, beRoas }: BeroasBarProps) {
   const barColor = { above: 'bg-green-500', near: 'bg-amber-500', below: 'bg-red-500' }[status]
 
   return (
-    <div className="relative h-6 bg-slate-100 rounded-full overflow-visible">
+    <div className="relative h-6 bg-slate-100 dark:bg-slate-700 rounded-full overflow-visible">
       {/* Actual ROAS bar */}
       <div
         className={cn('absolute left-0 top-0 h-full rounded-full transition-all duration-500', barColor)}
@@ -56,7 +56,7 @@ export function BeroasBar({ actualRoas, beRoas }: BeroasBarProps) {
       />
       {/* BEROAS reference line */}
       <div
-        className="absolute top-0 bottom-0 w-0.5 bg-slate-600 z-10"
+        className="absolute top-0 bottom-0 w-0.5 bg-slate-600 dark:bg-slate-300 z-10"
         style={{ left: `${bePct}%` }}
       />
       <div className="absolute inset-0 flex items-center justify-end pr-2">

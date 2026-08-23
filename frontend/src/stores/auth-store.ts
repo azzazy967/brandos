@@ -1,10 +1,13 @@
 import { create } from 'zustand'
 
+export type Role = 'owner' | 'admin' | 'editor' | 'viewer'
+
 interface User {
   id: string
   name: string
   email: string
   brandId: string
+  role: Role
 }
 
 interface AuthState {

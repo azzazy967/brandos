@@ -7,13 +7,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  owner
+  admin
+  editor
+  viewer
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
   passwordHash String
   name         String?
-  role         String   @default("owner")
+  role         Role     @default(owner)
   brandId      String?
+  invitedBy    String?
   createdAt    DateTime @default(now())
   brand        Brand?   @relation(fields: [brandId], references: [id])
 }
@@ -38,6 +46,7 @@ model Brand {
   aiInsights         AiInsight[]
   overheadSettings   OverheadSettings?
   bazaarEvents       BazaarEvent[]
+  tasks              Task[]
 }
 
 model Integration {
@@ -247,5 +256,26 @@ model AiInsight {
   brand     Brand    @relation(fields: [brandId], references: [id])
 
   @@index([brandId, isRead])
+  @@index([brandId, module])
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  brandId     String
+  title       String
+  description String?
+  status      String    @default("todo")
+  priority    String    @default("medium")
+  module      String    @default("general")
+  dueDate     DateTime?
+  linkedType  String?
+  linkedId    String?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  brand       Brand     @relation(fields: [brandId], references: [id])
+
+  @@index([brandId, status])
+  @@index([brandId, dueDate])
   @@index([brandId, module])
 }

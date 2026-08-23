@@ -51,7 +51,7 @@ export default function RestockPlanner() {
     { key: 'currentStock', header: 'Current Stock', sortable: true, render: i => <span className="font-mono">{i.currentStock}</span> },
     { key: 'avgDailySales', header: 'Avg Daily Sales', sortable: true, render: i => <span className="font-mono">{(i.avgDailySales ?? 0).toFixed(1)}</span> },
     { key: 'daysOfStockLeft', header: 'Days Left', sortable: true, render: i => (
-      <span className={`font-mono font-semibold ${i.daysOfStockLeft <= 7 ? 'text-red-600' : i.daysOfStockLeft <= 14 ? 'text-amber-600' : 'text-green-600'}`}>
+      <span className={`font-mono font-semibold ${i.daysOfStockLeft <= 7 ? 'text-red-600 dark:text-red-400' : i.daysOfStockLeft <= 14 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
         {Math.round(i.daysOfStockLeft)}d
       </span>
     )},
@@ -61,7 +61,7 @@ export default function RestockPlanner() {
     { key: 'overrideQty', header: 'Your Order Qty', sortable: false, render: i => (
       <input
         type="number"
-        className="w-20 h-8 text-sm border border-slate-200 rounded-lg px-2 text-center focus:outline-none focus:border-[#2563EB] transition-colors"
+        className="w-20 h-8 text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-2 text-center focus:outline-none focus:border-[#2563EB] transition-colors dark:bg-slate-700 dark:text-slate-100"
         placeholder={String(i.suggestedQty)}
         value={overrides[i.id] ?? ''}
         onChange={e => setOverrides(prev => ({ ...prev, [i.id]: e.target.value }))}
@@ -74,8 +74,8 @@ export default function RestockPlanner() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Restock Planner</h1>
-          <p className="text-slate-500 text-sm mt-1">SKUs that need restocking based on 45-day supply target</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Restock Planner</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">SKUs that need restocking based on 45-day supply target</p>
         </div>
         <Button variant="outline" onClick={handleExport} className="gap-2">
           <Download size={16} />
@@ -84,17 +84,17 @@ export default function RestockPlanner() {
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <p className="text-sm text-red-600 font-medium">Critical (&lt;7 days)</p>
-          <p className="text-2xl font-bold text-red-700">{items.filter(i => i.daysOfStockLeft <= 7).length}</p>
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl p-4">
+          <p className="text-sm text-red-600 dark:text-red-400 font-medium">Critical (&lt;7 days)</p>
+          <p className="text-2xl font-bold text-red-700 dark:text-red-400">{items.filter(i => i.daysOfStockLeft <= 7).length}</p>
         </div>
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <p className="text-sm text-amber-600 font-medium">Low (7–14 days)</p>
-          <p className="text-2xl font-bold text-amber-700">{items.filter(i => i.daysOfStockLeft > 7 && i.daysOfStockLeft <= 14).length}</p>
+        <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
+          <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">Low (7–14 days)</p>
+          <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{items.filter(i => i.daysOfStockLeft > 7 && i.daysOfStockLeft <= 14).length}</p>
         </div>
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <p className="text-sm text-blue-600 font-medium">Total SKUs to restock</p>
-          <p className="text-2xl font-bold text-blue-700">{items.length}</p>
+        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+          <p className="text-sm text-blue-600 dark:text-blue-400 font-medium">Total SKUs to restock</p>
+          <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{items.length}</p>
         </div>
       </div>
 

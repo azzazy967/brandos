@@ -44,10 +44,14 @@ import EventDetail from '@/pages/pos/EventDetail'
 import PosHistory from '@/pages/pos/PosHistory'
 import PosOrderDetail from '@/pages/pos/PosOrderDetail'
 
+// Tasks
+import Tasks from '@/pages/Tasks'
+
 // Other
 import Insights from '@/pages/Insights'
 import Integrations from '@/pages/settings/Integrations'
 import BrandSettings from '@/pages/settings/BrandSettings'
+import TeamMembers from '@/pages/settings/TeamMembers'
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore()
@@ -113,9 +117,13 @@ export default function App() {
         {/* Insights */}
         <Route path="/insights" element={<Insights />} />
 
+        {/* Tasks */}
+        <Route path="/tasks" element={<Tasks />} />
+
         {/* Settings */}
         <Route path="/settings/integrations" element={<Integrations />} />
         <Route path="/settings/brand" element={<BrandSettings />} />
+        <Route path="/settings/team" element={<TeamMembers />} />
       </Route>
 
       {/* Fallback */}

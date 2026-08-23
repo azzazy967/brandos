@@ -109,7 +109,8 @@ router.get('/orders', async (req, res) => {
     const { brandId } = req.user!
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
-    const { eventId, from, to, paymentMethod, page = '1', limit = '50' } = req.query as Record<string, string>
+    const { eventId, from, to, paymentMethod, page = '1', limit: rawLimit = '50' } = req.query as Record<string, string>
+    const parsedLimit = Math.min(parseInt(rawLimit) || 50, 500)
     const where: Record<string, unknown> = { brandId }
     if (eventId) where.eventId = eventId
     if (paymentMethod) where.paymentMethod = paymentMethod
@@ -123,10 +124,22 @@ router.get('/orders', async (req, res) => {
       where,
       include: { items: { include: { product: true } }, event: true },
       orderBy: { createdAt: 'desc' },
-      skip: (parseInt(page) - 1) * parseInt(limit),
-      take: parseInt(limit),
+      skip: (parseInt(page) - 1) * parsedLimit,
+      take: parsedLimit,
     })
-    res.json({ success: true, data: orders })
+    const mapped = orders.map(o => ({
+      id: o.id,
+      orderNumber: o.orderNumber,
+      eventId: o.eventId,
+      eventName: o.event?.name ?? null,
+      totalAmount: o.totalAmount,
+      discountAmount: o.discountAmount,
+      finalAmount: o.finalAmount,
+      paymentMethod: o.paymentMethod,
+      itemCount: o.items.reduce((s, i) => s + i.quantity, 0),
+      createdAt: o.createdAt,
+    }))
+    res.json({ success: true, data: mapped })
   } catch (error) {
     console.error('POS orders list error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })
@@ -162,10 +175,21 @@ router.get('/events', async (req, res) => {
 
     const events = await prisma.bazaarEvent.findMany({
       where: { brandId },
-      include: { inventory: { include: { product: true } }, _count: { select: { posOrders: true } } },
+      include: { inventory: { include: { product: true } }, posOrders: { select: { finalAmount: true } }, _count: { select: { posOrders: true } } },
       orderBy: { startDate: 'desc' },
     })
-    res.json({ success: true, data: events })
+    const mapped = events.map(e => ({
+      id: e.id,
+      name: e.name,
+      location: e.location,
+      startDate: e.startDate,
+      endDate: e.endDate,
+      status: e.status,
+      totalRevenue: e.posOrders.reduce((s, o) => s + o.finalAmount, 0),
+      orderCount: e._count.posOrders,
+      createdAt: e.createdAt,
+    }))
+    res.json({ success: true, data: mapped })
   } catch (error) {
     console.error('Events list error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })

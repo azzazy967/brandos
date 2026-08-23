@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import rateLimit from 'express-rate-limit'
 import prisma from '../lib/prisma'
 import { authenticate } from '../middleware/auth'
 import { generateInsights } from '../lib/insights'
@@ -6,12 +7,21 @@ import { generateInsights } from '../lib/insights'
 const router = Router()
 router.use(authenticate)
 
+const generateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  keyGenerator: (req) => req.user?.brandId ?? req.ip ?? 'unknown',
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
 router.get('/', async (req, res) => {
   try {
     const { brandId } = req.user!
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
-    const { module, severity, isRead, page = '1', limit = '50' } = req.query as Record<string, string>
+    const { module, severity, isRead, page = '1', limit: rawLimit = '50' } = req.query as Record<string, string>
+    const limit = String(Math.min(parseInt(rawLimit) || 50, 500))
     const where: Record<string, unknown> = { brandId }
     if (module) where.module = module
     if (severity) where.severity = severity
@@ -43,7 +53,7 @@ router.get('/unread-count', async (req, res) => {
   }
 })
 
-router.post('/generate', async (req, res) => {
+router.post('/generate', generateLimiter, async (req, res) => {
   try {
     const { brandId } = req.user!
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }

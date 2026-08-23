@@ -17,7 +17,7 @@ const METHODS = [
 export function PaymentSelector({ value, onChange }: PaymentSelectorProps) {
   return (
     <div className="space-y-1.5">
-      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Payment Method</label>
+      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Payment Method</label>
       <div className="grid grid-cols-3 gap-2">
         {METHODS.map(({ key, label, icon: Icon }) => (
           <button
@@ -26,8 +26,8 @@ export function PaymentSelector({ value, onChange }: PaymentSelectorProps) {
             className={cn(
               'flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 text-sm font-semibold transition-all duration-150 cursor-pointer min-h-[60px]',
               value === key
-                ? 'border-[#2563EB] bg-blue-50 text-[#2563EB]'
-                : 'border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                ? 'border-[#2563EB] bg-blue-50 dark:bg-blue-900/30 text-[#2563EB]'
+                : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700'
             )}
           >
             <Icon size={20} />

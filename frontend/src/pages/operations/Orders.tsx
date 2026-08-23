@@ -30,28 +30,28 @@ export default function Orders() {
   }, [statusFilter, sourceFilter])
 
   const columns: ColumnDef<Order>[] = [
-    { key: 'id', header: 'Order ID', render: o => <span className="font-mono text-xs text-blue-600">{o.id.slice(0,12)}</span> },
+    { key: 'id', header: 'Order ID', render: o => <span className="font-mono text-xs text-blue-600 dark:text-blue-400">{o.id.slice(0,12)}</span> },
     { key: 'source', header: 'Source', render: o => <StatusBadge status={o.source} /> },
     { key: 'customerName', header: 'Customer', render: o => (
       <div>
         <p className="text-sm">{o.customerName ?? '—'}</p>
-        {o.customerPhone && <p className="text-xs text-slate-400">{o.customerPhone}</p>}
+        {o.customerPhone && <p className="text-xs text-slate-400 dark:text-slate-500">{o.customerPhone}</p>}
       </div>
     )},
     { key: 'itemCount', header: 'Items', render: o => <span className="font-mono">{o.itemCount}</span> },
     { key: 'totalAmount', header: 'Total', sortable: true, render: o => <span className="font-mono font-semibold">{formatCurrency(o.totalAmount)}</span> },
     { key: 'paymentMethod', header: 'Payment', render: o => <StatusBadge status={o.paymentMethod} /> },
     { key: 'status', header: 'Order Status', render: o => <StatusBadge status={o.status} /> },
-    { key: 'shipmentStatus', header: 'Shipment', render: o => o.shipmentStatus ? <StatusBadge status={o.shipmentStatus} /> : <span className="text-slate-400">—</span> },
-    { key: 'codStatus', header: 'COD', render: o => o.codStatus && o.codStatus !== 'not_applicable' ? <StatusBadge status={o.codStatus} /> : <span className="text-slate-400">—</span> },
+    { key: 'shipmentStatus', header: 'Shipment', render: o => o.shipmentStatus ? <StatusBadge status={o.shipmentStatus} /> : <span className="text-slate-400 dark:text-slate-500">—</span> },
+    { key: 'codStatus', header: 'COD', render: o => o.codStatus && o.codStatus !== 'not_applicable' ? <StatusBadge status={o.codStatus} /> : <span className="text-slate-400 dark:text-slate-500">—</span> },
     { key: 'createdAt', header: 'Date', sortable: true, render: o => formatDate(o.createdAt) },
   ]
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Orders</h1>
-        <p className="text-slate-500 text-sm mt-1">All orders from Shopify and other channels</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Orders</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">All orders from Shopify and other channels</p>
       </div>
 
       <div className="flex gap-3">

@@ -32,7 +32,7 @@ export default function Attribution() {
     { key: 'totalRevenue', header: 'Total Revenue', sortable: true, render: r => <span className="font-mono font-semibold">{formatCurrency(r.totalRevenue)}</span> },
     { key: 'adPct', header: '% from Ads', sortable: true, render: r => (
       <div className="flex items-center gap-2">
-        <div className="flex-1 bg-slate-100 rounded-full h-1.5 max-w-20">
+        <div className="flex-1 bg-slate-100 dark:bg-slate-700 rounded-full h-1.5 max-w-20">
           <div className="bg-[#2563EB] h-1.5 rounded-full" style={{ width: `${Math.min(r.adPct, 100)}%` }} />
         </div>
         <span className="font-mono text-sm">{formatPercent(r.adPct)}</span>
@@ -43,8 +43,8 @@ export default function Attribution() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Attribution</h1>
-        <p className="text-slate-500 text-sm mt-1">Ad-attributed revenue vs organic revenue per product</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Attribution</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Ad-attributed revenue vs organic revenue per product</p>
       </div>
 
       <DataTable

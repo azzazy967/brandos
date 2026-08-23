@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Package } from 'lucide-react'
+import { Package, Boxes, DollarSign, AlertTriangle, XCircle, Archive } from 'lucide-react'
 import { DataTable, ColumnDef } from '@/components/shared/DataTable'
+import { KpiCard } from '@/components/shared/KpiCard'
 import { StatusBadge } from '@/components/shared/StatusBadge'
 import { Badge } from '@/components/ui/badge'
 import { Select } from '@/components/ui/select'
@@ -28,6 +29,26 @@ function getStatusForProduct(p: Product): string {
   return 'healthy'
 }
 
+function StockBar({ value, max }: { value: number; max: number }) {
+  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
+  const color =
+    pct <= 15 ? 'bg-red-500' :
+    pct <= 40 ? 'bg-amber-500' :
+    'bg-green-500'
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="font-mono text-sm w-8 text-right">{value}</span>
+      <div className="flex-1 h-2 min-w-[48px] max-w-[80px] rounded-full bg-slate-200 dark:bg-slate-600 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-300 ${color}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default function InventoryList() {
   const navigate = useNavigate()
   const [products, setProducts] = useState<Product[]>([])
@@ -52,6 +73,23 @@ export default function InventoryList() {
 
   const collections = [...new Set(products.map(p => p.collection).filter(Boolean))] as string[]
 
+  /* ─── KPI computations ─── */
+  const kpis = useMemo(() => {
+    const totalSKUs = products.length
+    const totalStockValue = products.reduce((sum, p) => sum + p.stockWarehouse * p.costPrice, 0)
+    const totalUnits = products.reduce((sum, p) => sum + p.stockWarehouse + p.stockPhysical, 0)
+    const statuses = products.map(getStatusForProduct)
+    const lowStockCount = statuses.filter(s => s === 'low_stock' || s === 'critical').length
+    const outOfStockCount = statuses.filter(s => s === 'out_of_stock').length
+    const deadStockCount = statuses.filter(s => s === 'dead_stock').length
+    return { totalSKUs, totalStockValue, totalUnits, lowStockCount, outOfStockCount, deadStockCount }
+  }, [products])
+
+  const maxWarehouseStock = useMemo(
+    () => Math.max(1, ...products.map(p => p.stockWarehouse)),
+    [products]
+  )
+
   const handleInlineEdit = async (productId: string) => {
     const qty = Number(editQty)
     if (isNaN(qty) || qty < 0) { toast.error('Invalid quantity'); return }
@@ -66,45 +104,45 @@ export default function InventoryList() {
   const columns: ColumnDef<Product>[] = [
     { key: 'title', header: 'Product', render: p => (
       <div className="flex items-center gap-2">
-        {p.imageUrl ? <img src={p.imageUrl} alt="" className="h-8 w-8 rounded object-cover" /> : <div className="h-8 w-8 rounded bg-slate-100 flex items-center justify-center"><Package size={14} className="text-slate-400" /></div>}
+        {p.imageUrl ? <img src={p.imageUrl} alt="" className="h-10 w-10 rounded object-cover" /> : <div className="h-10 w-10 rounded bg-slate-100 dark:bg-slate-700 flex items-center justify-center"><Package size={16} className="text-slate-400" /></div>}
         <div>
-          <p className="font-medium text-slate-900 text-sm">{p.title}</p>
-          <p className="text-xs text-slate-400 font-mono">{p.sku}</p>
+          <p className="font-medium text-slate-900 dark:text-slate-100 text-sm">{p.title}</p>
+          <p className="text-xs text-slate-400 font-mono hidden md:block">{p.sku}</p>
         </div>
       </div>
     )},
-    { key: 'collection', header: 'Collection', render: p => p.collection ? <Badge variant="info">{p.collection}</Badge> : <span className="text-slate-400">—</span> },
-    { key: 'size', header: 'Size', render: p => p.size ? <Badge variant="muted">{p.size}</Badge> : <span className="text-slate-400">—</span> },
-    { key: 'color', header: 'Color', render: p => p.color ?? '—' },
+    { key: 'collection', header: 'Collection', hideBelow: 'md' as const, render: p => p.collection ? <Badge variant="info">{p.collection}</Badge> : <span className="text-slate-400">—</span> },
+    { key: 'size', header: 'Size', hideBelow: 'md' as const, render: p => p.size ? <Badge variant="muted">{p.size}</Badge> : <span className="text-slate-400">—</span> },
+    { key: 'color', header: 'Color', hideBelow: 'lg' as const, render: p => p.color ?? '—' },
     {
       key: 'stockWarehouse', header: 'Warehouse', sortable: true,
       render: p => editingId === p.id ? (
         <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
           <input
-            className="w-16 h-7 text-sm border rounded px-2 text-center focus:outline-none focus:border-[#2563EB]"
+            className="w-16 h-7 text-sm border rounded px-2 text-center focus:outline-none focus:border-[#2563EB] dark:bg-slate-700 dark:border-slate-600 dark:text-slate-100"
             value={editQty}
             onChange={e => setEditQty(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleInlineEdit(p.id); if (e.key === 'Escape') setEditingId(null) }}
             autoFocus
           />
-          <button onClick={() => handleInlineEdit(p.id)} className="text-green-600 text-xs font-medium hover:text-green-800 cursor-pointer">Save</button>
-          <button onClick={() => setEditingId(null)} className="text-slate-400 text-xs hover:text-slate-600 cursor-pointer">Cancel</button>
+          <button onClick={() => handleInlineEdit(p.id)} className="text-green-600 dark:text-green-400 text-xs font-medium hover:text-green-800 cursor-pointer">Save</button>
+          <button onClick={() => setEditingId(null)} className="text-slate-400 text-xs hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer">Cancel</button>
         </div>
       ) : (
         <button
           onClick={e => { e.stopPropagation(); setEditingId(p.id); setEditQty(String(p.stockWarehouse)) }}
-          className="font-mono text-sm hover:text-[#2563EB] cursor-pointer transition-colors duration-150"
+          className="w-full cursor-pointer transition-colors duration-150 hover:text-[#2563EB]"
         >
-          {p.stockWarehouse}
+          <StockBar value={p.stockWarehouse} max={maxWarehouseStock} />
         </button>
       )
     },
-    { key: 'stockShopify', header: 'Shopify', sortable: true, render: p => <span className="font-mono text-sm">{p.stockShopify}</span> },
-    { key: 'stockPhysical', header: 'Physical', sortable: true, render: p => <span className="font-mono text-sm">{p.stockPhysical}</span> },
-    { key: 'unitsSold30d', header: 'Sold 30d', sortable: true, render: p => <span className="font-mono text-sm">{p.unitsSold30d}</span> },
-    { key: 'sellThroughPct', header: 'Sell-through', sortable: true, render: p => <span className={`font-mono text-sm ${p.sellThroughPct >= 70 ? 'text-green-600' : p.sellThroughPct >= 40 ? 'text-amber-600' : 'text-red-600'}`}>{(p.sellThroughPct ?? 0).toFixed(1)}%</span> },
-    { key: 'daysOfStockLeft', header: 'Days Left', sortable: true, render: p => (
-      <span className={`font-mono text-sm font-semibold ${p.daysOfStockLeft == null || p.daysOfStockLeft <= 7 ? 'text-red-600' : p.daysOfStockLeft <= 14 ? 'text-amber-600' : 'text-green-600'}`}>
+    { key: 'stockShopify', header: 'Shopify', sortable: true, hideBelow: 'md' as const, render: p => <span className="font-mono text-sm">{p.stockShopify}</span> },
+    { key: 'stockPhysical', header: 'Physical', sortable: true, hideBelow: 'md' as const, render: p => <span className="font-mono text-sm">{p.stockPhysical}</span> },
+    { key: 'unitsSold30d', header: 'Sold 30d', sortable: true, hideBelow: 'md' as const, render: p => <span className="font-mono text-sm">{p.unitsSold30d}</span> },
+    { key: 'sellThroughPct', header: 'Sell-through', sortable: true, hideBelow: 'md' as const, render: p => <span className={`font-mono text-sm ${p.sellThroughPct >= 70 ? 'text-green-600 dark:text-green-400' : p.sellThroughPct >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>{(p.sellThroughPct ?? 0).toFixed(1)}%</span> },
+    { key: 'daysOfStockLeft', header: 'Days Left', sortable: true, hideBelow: 'lg' as const, render: p => (
+      <span className={`font-mono text-sm font-semibold ${p.daysOfStockLeft == null || p.daysOfStockLeft <= 7 ? 'text-red-600 dark:text-red-400' : p.daysOfStockLeft <= 14 ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'}`}>
         {p.daysOfStockLeft == null || p.daysOfStockLeft === 0 ? '—' : `${Math.round(p.daysOfStockLeft)}d`}
       </span>
     )},
@@ -115,9 +153,58 @@ export default function InventoryList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Inventory</h1>
-          <p className="text-slate-500 text-sm mt-1">Manage and monitor your stock levels</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Inventory</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Manage and monitor your stock levels</p>
         </div>
+      </div>
+
+      {/* ─── KPI Summary Cards ─── */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <KpiCard
+          title="Total SKUs"
+          value={kpis.totalSKUs}
+          format="number"
+          icon={Boxes}
+          status="neutral"
+          loading={loading}
+          subtitle={`${kpis.totalUnits} total units`}
+        />
+        <KpiCard
+          title="Stock Value"
+          value={kpis.totalStockValue}
+          format="currency"
+          icon={DollarSign}
+          status="neutral"
+          loading={loading}
+          subtitle="warehouse cost basis"
+        />
+        <KpiCard
+          title="Low Stock"
+          value={kpis.lowStockCount}
+          format="number"
+          icon={AlertTriangle}
+          status={kpis.lowStockCount > 0 ? 'warning' : 'healthy'}
+          loading={loading}
+          subtitle="low + critical"
+        />
+        <KpiCard
+          title="Out of Stock"
+          value={kpis.outOfStockCount}
+          format="number"
+          icon={XCircle}
+          status={kpis.outOfStockCount > 0 ? 'critical' : 'healthy'}
+          loading={loading}
+          subtitle="zero inventory"
+        />
+        <KpiCard
+          title="Dead Stock"
+          value={kpis.deadStockCount}
+          format="number"
+          icon={Archive}
+          status={kpis.deadStockCount > 0 ? 'warning' : 'healthy'}
+          loading={loading}
+          subtitle="no sales in 30d"
+        />
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">

@@ -81,6 +81,15 @@ router.get('/products', async (req, res) => {
       return 100 // default if not provided
     })()
 
+    // Validate parsed numeric query params
+    const numericParams = { rent, salaries, otherFixed, avgShipping, unitsSold }
+    for (const [key, val] of Object.entries(numericParams)) {
+      if (isNaN(val) || !isFinite(val)) {
+        res.status(400).json({ success: false, error: `Invalid numeric value for ${key}` })
+        return
+      }
+    }
+
     const overheadPerUnit = calculateOverheadPerUnit({
       monthlyRent: rent, monthlySalaries: salaries, otherMonthly: otherFixed, unitsSoldThisMonth: unitsSold,
     })

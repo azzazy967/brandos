@@ -47,11 +47,11 @@ export default function PosHistory() {
   }, [eventFilter, paymentFilter, dateFrom, dateTo])
 
   const columns: ColumnDef<PosOrder>[] = [
-    { key: 'orderNumber', header: 'Order #', render: o => <span className="font-mono text-sm text-blue-600">{o.orderNumber}</span> },
-    { key: 'eventName', header: 'Event', render: o => o.eventName ? <span className="text-sm">{o.eventName}</span> : <span className="text-slate-400">—</span> },
+    { key: 'orderNumber', header: 'Order #', render: o => <span className="font-mono text-sm text-blue-600 dark:text-blue-400">{o.orderNumber}</span> },
+    { key: 'eventName', header: 'Event', render: o => o.eventName ? <span className="text-sm">{o.eventName}</span> : <span className="text-slate-400 dark:text-slate-500">—</span> },
     { key: 'itemCount', header: 'Items', render: o => <span className="font-mono">{o.itemCount}</span> },
     { key: 'finalAmount', header: 'Total', sortable: true, render: o => <span className="font-mono font-semibold">{formatCurrency(o.finalAmount)}</span> },
-    { key: 'discountAmount', header: 'Discount', render: o => o.discountAmount > 0 ? <span className="font-mono text-green-600">-{formatCurrency(o.discountAmount)}</span> : <span className="text-slate-400">—</span> },
+    { key: 'discountAmount', header: 'Discount', render: o => o.discountAmount > 0 ? <span className="font-mono text-green-600 dark:text-green-400">-{formatCurrency(o.discountAmount)}</span> : <span className="text-slate-400 dark:text-slate-500">—</span> },
     { key: 'paymentMethod', header: 'Payment', render: o => <StatusBadge status={o.paymentMethod} /> },
     { key: 'createdAt', header: 'Date & Time', sortable: true, render: o => formatDateTime(o.createdAt) },
   ]
@@ -66,8 +66,8 @@ export default function PosHistory() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">POS History</h1>
-        <p className="text-slate-500 text-sm mt-1">All point-of-sale transactions</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">POS History</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">All point-of-sale transactions</p>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -86,7 +86,7 @@ export default function PosHistory() {
           placeholder="All Payments"
         />
         <Input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="w-40" />
-        <span className="self-center text-slate-400 text-sm">to</span>
+        <span className="self-center text-slate-400 dark:text-slate-500 text-sm">to</span>
         <Input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="w-40" />
       </div>
 
@@ -94,8 +94,8 @@ export default function PosHistory() {
       {Object.keys(dailyTotals).length > 0 && (
         <div className="flex gap-3 overflow-x-auto pb-1">
           {Object.entries(dailyTotals).sort().reverse().slice(0, 7).map(([day, total]) => (
-            <div key={day} className="shrink-0 p-3 bg-white rounded-xl border border-slate-200 min-w-28 text-center">
-              <p className="text-xs text-slate-500">{day.slice(5)}</p>
+            <div key={day} className="shrink-0 p-3 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 min-w-28 text-center">
+              <p className="text-xs text-slate-500 dark:text-slate-400">{day.slice(5)}</p>
               <p className="font-mono font-bold text-[#2563EB] text-sm">{formatCurrency(total)}</p>
             </div>
           ))}

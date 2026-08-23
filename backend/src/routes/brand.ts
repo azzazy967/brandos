@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import prisma from '../lib/prisma'
 import { authenticate } from '../middleware/auth'
+import { requireMinRole } from '../middleware/rbac'
 
 const router = Router()
 router.use(authenticate)
@@ -32,7 +33,7 @@ router.get('/', async (req, res) => {
   }
 })
 
-router.put('/', async (req, res) => {
+router.put('/', requireMinRole('admin'), async (req, res) => {
   try {
     const { brandId } = req.user!
     if (!brandId) {

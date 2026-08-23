@@ -88,22 +88,22 @@ export default function BeroasCalculator() {
     { key: 'title', header: 'Product', sortable: true, render: p => <p className="font-medium text-sm">{p.title}</p> },
     { key: 'sku', header: 'SKU', render: p => <span className="font-mono text-xs">{p.sku}</span> },
     { key: 'size', header: 'Size/Color', render: p => (
-      <span className="text-xs text-slate-500">{[p.size, p.color].filter(Boolean).join(' / ') || '—'}</span>
+      <span className="text-xs text-slate-500 dark:text-slate-400">{[p.size, p.color].filter(Boolean).join(' / ') || '—'}</span>
     )},
     { key: 'sellingPrice', header: 'Selling Price', render: p => <span className="font-mono">{formatCurrency(p.sellingPrice)}</span> },
     { key: 'costPrice', header: 'COGS', render: p => <span className="font-mono">{formatCurrency(p.costPrice)}</span> },
     { key: 'grossProfit', header: 'Gross Profit/unit', sortable: true, render: p => (
-      <span className={`font-mono font-semibold ${p.grossProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+      <span className={`font-mono font-semibold ${p.grossProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
         {formatCurrency(p.grossProfit)}
       </span>
     )},
     { key: 'marginPct', header: 'Margin %', sortable: true, render: p => (
-      <span className={`font-semibold ${p.marginPct >= 30 ? 'text-green-600' : p.marginPct >= 20 ? 'text-amber-600' : 'text-red-600'}`}>
+      <span className={`font-semibold ${p.marginPct >= 30 ? 'text-green-600 dark:text-green-400' : p.marginPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
         {p.marginPct.toFixed(1)}%
       </span>
     )},
     { key: 'beRoas', header: 'Breakeven ROAS', sortable: true, render: p => (
-      <span className={`font-mono font-bold ${p.beRoas < 2 ? 'text-green-600' : p.beRoas <= 3.5 ? 'text-amber-600' : 'text-red-600'}`}>
+      <span className={`font-mono font-bold ${p.beRoas < 2 ? 'text-green-600 dark:text-green-400' : p.beRoas <= 3.5 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
         {p.beRoas >= 999 ? '∞' : `${p.beRoas.toFixed(2)}x`}
       </span>
     )},
@@ -112,8 +112,8 @@ export default function BeroasCalculator() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">BEROAS Calculator</h1>
-        <p className="text-slate-500 text-sm mt-1">Calculate your breakeven return on ad spend</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">BEROAS Calculator</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Calculate your breakeven return on ad spend</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -121,13 +121,13 @@ export default function BeroasCalculator() {
           <CardHeader><CardTitle className="flex items-center gap-2"><Calculator size={18} /> Inputs</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Product</p>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Product</p>
               <Input label="Selling Price (EGP)" type="number" value={sellingPrice} onChange={e => setSellingPrice(e.target.value)} min="0" />
               <Input label="COGS per unit (EGP)" type="number" value={cogs} onChange={e => setCogs(e.target.value)} min="0" />
               <Input label="Avg Shipping Cost (EGP)" type="number" value={avgShipping} onChange={e => setAvgShipping(e.target.value)} min="0" />
             </div>
-            <div className="space-y-3 pt-2 border-t border-slate-100">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Monthly Overhead</p>
+            <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700">
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Monthly Overhead</p>
               <div className="grid grid-cols-2 gap-3">
                 <Input label="Rent (EGP)" type="number" value={monthlyRent} onChange={e => setMonthlyRent(e.target.value)} min="0" />
                 <Input label="Salaries (EGP)" type="number" value={monthlySalaries} onChange={e => setMonthlySalaries(e.target.value)} min="0" />
@@ -141,23 +141,23 @@ export default function BeroasCalculator() {
         <Card>
           <CardHeader><CardTitle>Results</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="text-center p-6 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
-              <p className="text-sm text-blue-600 font-medium mb-1">Your current breakeven ROAS is</p>
+            <div className="text-center p-6 rounded-xl bg-gradient-to-br from-blue-50 dark:from-blue-900/30 to-blue-100 dark:to-blue-800/30 border border-blue-200 dark:border-blue-800">
+              <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mb-1">Your current breakeven ROAS is</p>
               <p className="text-5xl font-bold font-mono text-[#2563EB]">
                 {isFinite(result.beRoas) ? result.beRoas.toFixed(2) : '∞'}x
               </p>
-              <p className="text-sm text-blue-500 mt-2">You need to earn {isFinite(result.beRoas) ? result.beRoas.toFixed(2) : '∞'} EGP for every 1 EGP spent on ads</p>
+              <p className="text-sm text-blue-500 dark:text-blue-400 mt-2">You need to earn {isFinite(result.beRoas) ? result.beRoas.toFixed(2) : '∞'} EGP for every 1 EGP spent on ads</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'Overhead/unit', value: `EGP ${overheadPerUnit.toFixed(2)}` },
-                { label: 'Gross Profit/unit', value: formatCurrency(result.grossProfit), color: result.grossProfit >= 0 ? 'text-green-600' : 'text-red-600' },
-                { label: 'Margin %', value: formatPercent(result.marginPct * 100), color: result.marginPct >= 0.3 ? 'text-green-600' : result.marginPct >= 0.2 ? 'text-amber-600' : 'text-red-600' },
+                { label: 'Gross Profit/unit', value: formatCurrency(result.grossProfit), color: result.grossProfit >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' },
+                { label: 'Margin %', value: formatPercent(result.marginPct * 100), color: result.marginPct >= 0.3 ? 'text-green-600 dark:text-green-400' : result.marginPct >= 0.2 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400' },
                 { label: 'Breakeven ROAS', value: `${isFinite(result.beRoas) ? result.beRoas.toFixed(2) : '∞'}x`, color: 'text-[#2563EB]' },
               ].map(({ label, value, color }) => (
-                <div key={label} className="p-3 rounded-lg bg-slate-50">
-                  <p className="text-xs text-slate-500">{label}</p>
-                  <p className={`font-mono font-bold text-lg ${color ?? 'text-slate-900'}`}>{value}</p>
+                <div key={label} className="p-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{label}</p>
+                  <p className={`font-mono font-bold text-lg ${color ?? 'text-slate-900 dark:text-slate-100'}`}>{value}</p>
                 </div>
               ))}
             </div>
@@ -167,16 +167,16 @@ export default function BeroasCalculator() {
 
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-slate-900">Per-Product BEROAS</h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Per-Product BEROAS</h2>
           <Input placeholder="Search by name or SKU..." value={search} onChange={e => setSearch(e.target.value)} className="w-64" />
         </div>
 
         {!hasCostPrices && !loading && products.length > 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <Package size={40} className="mx-auto text-slate-300 mb-3" />
-              <h3 className="font-semibold text-slate-700">Add your product cost prices</h3>
-              <p className="text-sm text-slate-500 mt-1">Set cost prices in Inventory to see per-product BEROAS</p>
+              <Package size={40} className="mx-auto text-slate-300 dark:text-slate-600 mb-3" />
+              <h3 className="font-semibold text-slate-700 dark:text-slate-300">Add your product cost prices</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Set cost prices in Inventory to see per-product BEROAS</p>
               <Link to="/inventory">
                 <Button variant="secondary" className="mt-4">Go to Inventory</Button>
               </Link>

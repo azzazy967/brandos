@@ -39,6 +39,22 @@ const statusConfig: Record<string, { label: string; variant: 'success' | 'warnin
   aramex: { label: 'Aramex', variant: 'info' },
   bosta: { label: 'Bosta', variant: 'info' },
   info: { label: 'Info', variant: 'info' },
+  todo: { label: 'To Do', variant: 'info' },
+  in_progress: { label: 'In Progress', variant: 'warning' },
+  done: { label: 'Done', variant: 'success' },
+  urgent: { label: 'Urgent', variant: 'danger' },
+  high: { label: 'High', variant: 'warning' },
+  medium: { label: 'Medium', variant: 'info' },
+  inventory: { label: 'Inventory', variant: 'info' },
+  finance: { label: 'Finance', variant: 'success' },
+  marketing: { label: 'Marketing', variant: 'warning' },
+  operations: { label: 'Operations', variant: 'info' },
+  general: { label: 'General', variant: 'muted' },
+  fulfilled: { label: 'Fulfilled', variant: 'success' },
+  owner: { label: 'Owner', variant: 'default' },
+  admin: { label: 'Admin', variant: 'info' },
+  editor: { label: 'Editor', variant: 'success' },
+  viewer: { label: 'Viewer', variant: 'muted' },
 }
 
 interface StatusBadgeProps {

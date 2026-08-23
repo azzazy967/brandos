@@ -17,8 +17,11 @@ import webhooksRouter from './routes/webhooks'
 import settingsRouter from './routes/settings'
 import dashboardRouter from './routes/dashboard'
 import syncRouter from './routes/sync'
+import tasksRouter from './routes/tasks'
+import usersRouter from './routes/users'
 
 const app = express()
+app.set('trust proxy', 1)
 
 app.use(helmet())
 app.use(cors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173' }))
@@ -35,7 +38,6 @@ app.use('/api/', limiter)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
-  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
 })
@@ -55,6 +57,8 @@ app.use('/api/webhooks', webhooksRouter)
 app.use('/api/settings', settingsRouter)
 app.use('/api/dashboard', dashboardRouter)
 app.use('/api/sync', syncRouter)
+app.use('/api/tasks', tasksRouter)
+app.use('/api/users', usersRouter)
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

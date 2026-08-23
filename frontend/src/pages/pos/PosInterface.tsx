@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import { ShoppingCart, X } from 'lucide-react'
 import { ProductGrid } from '@/components/pos/ProductGrid'
 import { Cart } from '@/components/pos/Cart'
 import { Receipt } from '@/components/pos/Receipt'
 import { Modal } from '@/components/ui/modal'
 import { useCartStore } from '@/stores/cart-store'
+import { formatCurrency } from '@/lib/utils'
 import { api } from '@/lib/api'
 import { toast } from '@/stores/toast-store'
 
@@ -30,7 +32,11 @@ export default function PosInterface() {
   const [charging, setCharging] = useState(false)
   const [receipt, setReceipt] = useState<ReceiptData | null>(null)
   const [activeEvent, setActiveEvent] = useState<ActiveEvent | null>(null)
+  const [cartOpen, setCartOpen] = useState(false)
   const { items, paymentMethod, total, subtotal, discountAmount, clearCart } = useCartStore()
+
+  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0)
+  const cartTotal = total()
 
   useEffect(() => {
     Promise.all([
@@ -106,18 +112,63 @@ export default function PosInterface() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] -m-6 overflow-hidden">
-      {/* Product grid - main area */}
+      {/* Product grid - full width on mobile, flex-1 on desktop */}
       <div className="flex-1 overflow-hidden">
         <ProductGrid products={products} loading={loading} />
       </div>
 
-      {/* Cart - right sidebar */}
-      <div className="w-80 xl:w-96 shrink-0 overflow-hidden">
+      {/* Cart - desktop sidebar (lg+) */}
+      <div className="hidden lg:block w-80 xl:w-96 shrink-0 overflow-hidden">
         <Cart
           onCharge={handleCharge}
           charging={charging}
           eventName={activeEvent?.name}
         />
+      </div>
+
+      {/* Mobile floating cart button (below lg) */}
+      <button
+        onClick={() => setCartOpen(true)}
+        className="lg:hidden fixed bottom-4 right-4 z-40 flex items-center gap-2 px-5 py-3.5 rounded-2xl bg-[#F97316] text-white font-bold text-sm shadow-lg hover:bg-[#EA580C] active:scale-95 transition-all duration-150 min-h-[44px] cursor-pointer"
+      >
+        <ShoppingCart size={20} />
+        <span>Cart{itemCount > 0 ? ` (${itemCount})` : ''}</span>
+        {itemCount > 0 && (
+          <span className="font-mono">{formatCurrency(cartTotal)}</span>
+        )}
+      </button>
+
+      {/* Mobile cart bottom sheet (below lg) */}
+      {/* Backdrop */}
+      <div
+        className={`lg:hidden fixed inset-0 z-50 bg-black/50 transition-opacity duration-300 ${cartOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setCartOpen(false)}
+      />
+      {/* Sheet */}
+      <div
+        className={`lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-slate-800 rounded-t-2xl h-[80vh] transition-transform duration-300 ease-out shadow-2xl flex flex-col ${cartOpen ? 'translate-y-0' : 'translate-y-full'}`}
+      >
+        {/* Drag handle + close */}
+        <div className="shrink-0 pt-3 pb-2 px-4 border-b border-slate-200 dark:border-slate-700">
+          <div className="w-10 h-1 rounded-full bg-slate-300 dark:bg-slate-600 mx-auto mb-3" />
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-slate-900 dark:text-slate-100 text-lg">Cart</h2>
+            <button
+              onClick={() => setCartOpen(false)}
+              className="h-10 w-10 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer min-h-[44px] min-w-[44px]"
+            >
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+        {/* Cart content fills remaining height; Cart's internal flex layout handles scrolling */}
+        <div className="flex-1 overflow-hidden">
+          <Cart
+            onCharge={() => { handleCharge(); setCartOpen(false) }}
+            charging={charging}
+            eventName={activeEvent?.name}
+          />
+        </div>
       </div>
 
       {/* Receipt modal */}

@@ -40,7 +40,8 @@ router.get('/orders', async (req, res) => {
     const { brandId } = req.user!
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
-    const { status, source, from, to, page = '1', limit = '50' } = req.query as Record<string, string>
+    const { status, source, from, to, page = '1', limit: rawLimit = '50' } = req.query as Record<string, string>
+    const parsedLimit = Math.min(parseInt(rawLimit) || 50, 500)
     const where: Record<string, unknown> = { brandId }
     if (status) where.status = status
     if (source) where.source = source
@@ -54,10 +55,23 @@ router.get('/orders', async (req, res) => {
       where,
       include: { items: { include: { product: true } }, shipment: true },
       orderBy: { createdAt: 'desc' },
-      skip: (parseInt(page) - 1) * parseInt(limit),
-      take: parseInt(limit),
+      skip: (parseInt(page) - 1) * parsedLimit,
+      take: parsedLimit,
     })
-    res.json({ success: true, data: orders })
+    const mapped = orders.map(o => ({
+      id: o.id,
+      source: o.source,
+      customerName: o.customerName,
+      customerPhone: o.customerPhone,
+      totalAmount: o.totalAmount,
+      paymentMethod: o.paymentMethod,
+      status: o.status,
+      shipmentStatus: o.shipment?.status ?? null,
+      codStatus: o.shipment?.codStatus ?? null,
+      createdAt: o.createdAt,
+      itemCount: o.items.reduce((s, i) => s + i.quantity, 0),
+    }))
+    res.json({ success: true, data: mapped })
   } catch (error) {
     console.error('Orders error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })
@@ -69,7 +83,8 @@ router.get('/shipments', async (req, res) => {
     const { brandId } = req.user!
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
-    const { courier, status, page = '1', limit = '50' } = req.query as Record<string, string>
+    const { courier, status, page = '1', limit: rawLimit = '50' } = req.query as Record<string, string>
+    const parsedLimit = Math.min(parseInt(rawLimit) || 50, 500)
     const where: Record<string, unknown> = { brandId }
     if (courier) where.courier = courier
     if (status) where.status = status
@@ -78,8 +93,8 @@ router.get('/shipments', async (req, res) => {
       where,
       include: { order: { include: { items: { include: { product: true } } } } },
       orderBy: { createdAt: 'desc' },
-      skip: (parseInt(page) - 1) * parseInt(limit),
-      take: parseInt(limit),
+      skip: (parseInt(page) - 1) * parsedLimit,
+      take: parsedLimit,
     })
     res.json({ success: true, data: shipments })
   } catch (error) {
@@ -98,7 +113,19 @@ router.get('/failed', async (req, res) => {
       include: { order: true },
       orderBy: { updatedAt: 'desc' },
     })
-    res.json({ success: true, data: shipments })
+    const mapped = shipments.map(s => ({
+      id: s.id,
+      orderId: s.orderId,
+      customerName: s.order?.customerName ?? null,
+      customerPhone: s.order?.customerPhone ?? null,
+      courier: s.courier,
+      attempts: 1,
+      lastAttemptAt: s.updatedAt,
+      codAmount: s.codAmount,
+      city: null,
+      shipmentId: s.id,
+    }))
+    res.json({ success: true, data: mapped })
   } catch (error) {
     console.error('Failed deliveries error:', error)
     res.status(500).json({ success: false, error: 'Internal server error' })

@@ -61,15 +61,15 @@ export default function FailedDeliveries() {
     { key: 'customerName', header: 'Customer', render: r => (
       <div>
         <p className="text-sm">{r.customerName ?? '—'}</p>
-        {r.city && <p className="text-xs text-slate-400">{r.city}</p>}
+        {r.city && <p className="text-xs text-slate-400 dark:text-slate-500">{r.city}</p>}
       </div>
     )},
     { key: 'courier', header: 'Courier', render: r => <StatusBadge status={r.courier} /> },
     { key: 'attempts', header: 'Attempts', sortable: true, render: r => (
-      <span className={`font-mono font-semibold ${r.attempts >= 3 ? 'text-red-600' : 'text-amber-600'}`}>{r.attempts}</span>
+      <span className={`font-mono font-semibold ${r.attempts >= 3 ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>{r.attempts}</span>
     )},
     { key: 'lastAttemptAt', header: 'Last Attempt', sortable: true, render: r => formatDate(r.lastAttemptAt) },
-    { key: 'codAmount', header: 'COD Amount', sortable: true, render: r => r.codAmount > 0 ? <span className="font-mono">{formatCurrency(r.codAmount)}</span> : <span className="text-slate-400">—</span> },
+    { key: 'codAmount', header: 'COD Amount', sortable: true, render: r => r.codAmount > 0 ? <span className="font-mono">{formatCurrency(r.codAmount)}</span> : <span className="text-slate-400 dark:text-slate-500">—</span> },
     {
       key: 'actions', header: 'Actions', sortable: false,
       render: r => (
@@ -86,7 +86,7 @@ export default function FailedDeliveries() {
           {r.customerPhone && (
             <a
               href={`tel:${r.customerPhone}`}
-              className="inline-flex items-center gap-1 h-8 px-3 text-xs font-semibold rounded-lg bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 h-8 px-3 text-xs font-semibold rounded-lg bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-800/40 transition-colors cursor-pointer"
             >
               <Phone size={12} />
               Call
@@ -109,15 +109,15 @@ export default function FailedDeliveries() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Failed Deliveries</h1>
-        <p className="text-slate-500 text-sm mt-1">Track and resolve failed shipment attempts</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Failed Deliveries</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Track and resolve failed shipment attempts</p>
       </div>
 
       {problemCities.length > 0 && (
-        <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
-          <p className="text-sm font-semibold text-amber-800 mb-1">Pattern Alert</p>
+        <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800">
+          <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-1">Pattern Alert</p>
           {problemCities.map(([city, count]) => (
-            <p key={city} className="text-sm text-amber-700">
+            <p key={city} className="text-sm text-amber-700 dark:text-amber-400">
               {count} failed deliveries to <strong>{city}</strong> this week — possible courier coverage issue
             </p>
           ))}

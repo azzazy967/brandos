@@ -56,7 +56,7 @@ export function ProductGrid({ products, loading }: ProductGridProps) {
   if (loading) {
     return (
       <div className="flex flex-col h-full">
-        <div className="p-4 border-b border-slate-200">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
           <div className="skeleton h-10 rounded-lg" />
         </div>
         <div className="flex-1 p-4 grid grid-cols-3 gap-3">
@@ -71,7 +71,7 @@ export function ProductGrid({ products, loading }: ProductGridProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Search + filters */}
-      <div className="p-4 border-b border-slate-200 bg-white space-y-3">
+      <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 space-y-3">
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -79,7 +79,7 @@ export function ProductGrid({ products, loading }: ProductGridProps) {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search products or SKU..."
-            className="h-11 w-full rounded-xl border border-slate-200 pl-9 pr-4 text-sm focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
+            className="h-11 w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 pl-9 pr-4 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
           />
         </div>
 
@@ -87,7 +87,7 @@ export function ProductGrid({ products, loading }: ProductGridProps) {
           <div className="flex gap-2 overflow-x-auto pb-1">
             <button
               onClick={() => setCollectionFilter('')}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-150 cursor-pointer ${!collectionFilter ? 'bg-[#2563EB] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-150 cursor-pointer ${!collectionFilter ? 'bg-[#2563EB] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
             >
               All
             </button>
@@ -95,7 +95,7 @@ export function ProductGrid({ products, loading }: ProductGridProps) {
               <button
                 key={col}
                 onClick={() => setCollectionFilter(col === collectionFilter ? '' : col!)}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-150 cursor-pointer ${collectionFilter === col ? 'bg-[#2563EB] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-150 cursor-pointer ${collectionFilter === col ? 'bg-[#2563EB] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'}`}
               >
                 {col}
               </button>
@@ -107,7 +107,7 @@ export function ProductGrid({ products, loading }: ProductGridProps) {
       {/* Product grid */}
       <div className="flex-1 overflow-y-auto p-4">
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-slate-500">
+          <div className="text-center py-16 text-slate-500 dark:text-slate-400">
             <p className="text-lg font-medium">No products found</p>
             <p className="text-sm mt-1">Try a different search or filter</p>
           </div>

@@ -31,7 +31,7 @@ export function Modal({ open, onClose, title, children, className, maxWidth = 'm
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       <div
         className={cn(
-          'relative bg-white rounded-2xl p-8 shadow-xl w-full',
+          'relative bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-xl w-full',
           maxWidth,
           className
         )}
@@ -39,10 +39,10 @@ export function Modal({ open, onClose, title, children, className, maxWidth = 'm
       >
         {title && (
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 transition-colors duration-150 cursor-pointer"
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-150 cursor-pointer"
             >
               <X size={20} />
             </button>
@@ -51,7 +51,7 @@ export function Modal({ open, onClose, title, children, className, maxWidth = 'm
         {!title && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors duration-150 cursor-pointer"
+            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-150 cursor-pointer"
           >
             <X size={20} />
           </button>

@@ -1,5 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
+@source "./**/*.{ts,tsx}";
+
+@custom-variant dark (&:is(.dark, .dark *));
 
 :root {
   --color-primary: #2563EB;
@@ -20,6 +23,26 @@
   --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
   --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
   --shadow-xl: 0 20px 25px rgba(0,0,0,0.15);
+
+  --chart-grid: #F1F5F9;
+  --chart-tooltip-bg: #FFFFFF;
+  --chart-tooltip-border: #E2E8F0;
+  --chart-text: #64748B;
+}
+
+.dark {
+  --color-background: #0B1120;
+  --color-text: #E2E8F0;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.4);
+  --shadow-xl: 0 20px 25px rgba(0,0,0,0.5);
+
+  --chart-grid: #334155;
+  --chart-tooltip-bg: #1E293B;
+  --chart-tooltip-border: #475569;
+  --chart-text: #94A3B8;
 }
 
 * {
@@ -46,16 +69,82 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Dashboard fade-in-up animation */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.45s ease-out both;
+}
+
+/* Auth form fade-in-up animation */
+@keyframes authFadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-auth-fade-in {
+  animation: authFadeInUp 0.4s ease-out both;
+}
+
+/* Password strength meter */
+.strength-bar {
+  height: 4px;
+  border-radius: 2px;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+/* Page transition animation */
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-page-fade-in {
+  animation: page-fade-in 0.3s ease-out both;
+}
+
 /* Skeleton animation */
 @keyframes skeleton-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
 
+@keyframes skeleton-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 .skeleton {
   animation: skeleton-pulse 1.5s ease-in-out infinite;
   background: #E2E8F0;
   border-radius: 4px;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+.dark .skeleton {
+  background: #334155;
+}
+
+.dark .skeleton-shimmer {
+  background: linear-gradient(90deg, #334155 25%, #475569 50%, #334155 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Pulsing dot for unread critical insights */
+@keyframes insight-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
+
+.pulse-dot {
+  animation: insight-pulse 2s ease-in-out infinite;
 }
 
 /* Print styles for receipts */
@@ -81,6 +170,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1E293B;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748B;
 }
 
 /* Toast notifications */
@@ -117,3 +216,24 @@ h1, h2, h3, h4, h5, h6 {
 .toast-error   { background: #FEF2F2; color: #991B1B; border-left: 4px solid #DC2626; }
 .toast-warning { background: #FFFBEB; color: #92400E; border-left: 4px solid #D97706; }
 .toast-info    { background: #EFF6FF; color: #1E40AF; border-left: 4px solid #2563EB; }
+
+.dark .toast-success { background: #052e16; color: #86efac; border-left-color: #22c55e; }
+.dark .toast-error   { background: #450a0a; color: #fca5a5; border-left-color: #ef4444; }
+.dark .toast-warning { background: #451a03; color: #fcd34d; border-left-color: #f59e0b; }
+.dark .toast-info    { background: #172554; color: #93c5fd; border-left-color: #3b82f6; }
+
+/* Recharts dark mode overrides */
+.dark .recharts-cartesian-grid line {
+  stroke: #334155 !important;
+}
+.dark .recharts-text {
+  fill: #94A3B8 !important;
+}
+.dark .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: #1E293B !important;
+  border-color: #475569 !important;
+  color: #E2E8F0 !important;
+}
+.dark .recharts-legend-item-text {
+  color: #CBD5E1 !important;
+}

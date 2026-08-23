@@ -44,8 +44,8 @@ export default function BrandSettings() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Brand Settings</h1>
-        <p className="text-slate-500 text-sm mt-1">Configure your brand profile and preferences</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Brand Settings</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Configure your brand profile and preferences</p>
       </div>
 
       <Card>
@@ -59,7 +59,7 @@ export default function BrandSettings() {
                 {/* Logo */}
                 {settings.logoUrl && (
                   <div className="flex items-center gap-4">
-                    <img src={settings.logoUrl} alt="Logo" className="h-16 w-16 rounded-xl object-contain border border-slate-200" />
+                    <img src={settings.logoUrl} alt="Logo" className="h-16 w-16 rounded-xl object-contain border border-slate-200 dark:border-slate-700" />
                     <Button type="button" variant="outline" size="sm" className="gap-2">
                       <Upload size={14} />
                       Change Logo

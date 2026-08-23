@@ -22,28 +22,28 @@ export function ProductCard({ product, onAdd, cartQty }: ProductCardProps) {
       onClick={onAdd}
       disabled={isOutOfStock || isMaxed}
       className={cn(
-        'relative flex flex-col w-full rounded-xl border-2 bg-white overflow-hidden text-left',
+        'relative flex flex-col w-full rounded-xl border-2 bg-white dark:bg-slate-800 overflow-hidden text-left',
         'transition-all duration-200 cursor-pointer',
         'min-h-[160px]',
         isOutOfStock || isMaxed
-          ? 'border-slate-200 opacity-50 cursor-not-allowed'
+          ? 'border-slate-200 dark:border-slate-700 opacity-50 cursor-not-allowed'
           : 'border-transparent hover:border-[#2563EB] hover:shadow-lg active:scale-95',
-        cartQty > 0 && !isOutOfStock && 'border-blue-300 shadow-md'
+        cartQty > 0 && !isOutOfStock && 'border-blue-300 dark:border-blue-700 shadow-md'
       )}
     >
       {/* Image */}
-      <div className="relative aspect-square w-full bg-slate-100 overflow-hidden">
+      <div className="relative aspect-square w-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
         {product.imageUrl ? (
           <img src={product.imageUrl} alt={product.title} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Package size={32} className="text-slate-300" />
+            <Package size={32} className="text-slate-300 dark:text-slate-600" />
           </div>
         )}
 
         {/* Out of stock overlay */}
         {(isOutOfStock || isMaxed) && (
-          <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+          <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 flex items-center justify-center">
             <span className="text-xs font-bold text-red-500 uppercase tracking-wide">
               {isOutOfStock ? 'Out of Stock' : 'Max qty'}
             </span>
@@ -67,13 +67,13 @@ export function ProductCard({ product, onAdd, cartQty }: ProductCardProps) {
 
       {/* Info */}
       <div className="p-3 flex-1 flex flex-col gap-1">
-        <p className="text-sm font-semibold text-slate-900 leading-tight line-clamp-2">{product.title}</p>
+        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 leading-tight line-clamp-2">{product.title}</p>
         <div className="flex flex-wrap gap-1 mt-auto">
           {product.size && (
-            <span className="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium">{product.size}</span>
+            <span className="text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded font-medium">{product.size}</span>
           )}
           {product.color && (
-            <span className="text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded">{product.color}</span>
+            <span className="text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded">{product.color}</span>
           )}
         </div>
         <div className="flex items-center justify-between mt-1">

@@ -73,31 +73,31 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] to-blue-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] dark:from-[#0B1120] to-blue-50 dark:to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[#2563EB] font-mono">Brand OS</h1>
-          <p className="text-slate-500 mt-2">Let's set up your Brand OS in a few steps</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-2">Let's set up your Brand OS in a few steps</p>
         </div>
 
         {/* Step progress */}
-        <div className="flex items-center justify-between mb-8 bg-white rounded-2xl p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-8 bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm">
           {STEPS.map((s, idx) => (
             <div key={s.id} className="flex items-center">
               <div className={cn(
                 'flex items-center justify-center h-9 w-9 rounded-full text-sm font-bold transition-all duration-200',
-                step > s.id ? 'bg-green-500 text-white' : step === s.id ? 'bg-[#2563EB] text-white' : 'bg-slate-100 text-slate-400'
+                step > s.id ? 'bg-green-500 text-white' : step === s.id ? 'bg-[#2563EB] text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-400'
               )}>
                 {step > s.id ? <CheckCircle size={18} /> : s.id}
               </div>
               {idx < STEPS.length - 1 && (
-                <div className={cn('h-0.5 w-8 sm:w-16 mx-1', step > s.id ? 'bg-green-500' : 'bg-slate-200')} />
+                <div className={cn('h-0.5 w-8 sm:w-16 mx-1', step > s.id ? 'bg-green-500' : 'bg-slate-200 dark:bg-slate-700')} />
               )}
             </div>
           ))}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl dark:shadow-black/20 p-8">
           {step === 1 && (
             <StepCard icon={Store} title="Connect Shopify" description="Enter your Shopify store URL to sync products and orders automatically.">
               <Input label="Shopify Store URL" value={shopifyUrl} onChange={e => setShopifyUrl(e.target.value)} placeholder="yourstore.myshopify.com" />
@@ -113,12 +113,12 @@ export default function Onboarding() {
           {step === 3 && (
             <StepCard icon={Truck} title="Connect Couriers" description="Connect Aramex and/or Bosta to track shipments and COD collection.">
               <div className="space-y-4">
-                <p className="text-sm font-semibold text-slate-700">Aramex (optional)</p>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Aramex (optional)</p>
                 <Input label="Username" value={aramex.username} onChange={e => setAramex(a => ({ ...a, username: e.target.value }))} placeholder="aramex@yourbrand.com" />
                 <Input label="Password" type="password" value={aramex.password} onChange={e => setAramex(a => ({ ...a, password: e.target.value }))} placeholder="••••••••" />
                 <Input label="Account Number" value={aramex.accountNumber} onChange={e => setAramex(a => ({ ...a, accountNumber: e.target.value }))} placeholder="12345678" />
                 <Input label="Account PIN" type="password" value={aramex.accountPin} onChange={e => setAramex(a => ({ ...a, accountPin: e.target.value }))} placeholder="••••" />
-                <p className="text-sm font-semibold text-slate-700 pt-2">Bosta (optional)</p>
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 pt-2">Bosta (optional)</p>
                 <Input label="Bosta API Key" type="password" value={bostaKey} onChange={e => setBostaKey(e.target.value)} placeholder="bosta_xxxxxxxx" />
               </div>
             </StepCard>
@@ -126,7 +126,7 @@ export default function Onboarding() {
 
           {step === 4 && (
             <StepCard icon={Package} title="Product COGS" description="You can enter COGS per product from the Inventory page later. Skip this step to proceed.">
-              <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-sm text-blue-700">
+              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 text-sm text-blue-700 dark:text-blue-400">
                 Product COGS can be configured individually from the Inventory module after setup. Click "Continue" to proceed.
               </div>
             </StepCard>
@@ -165,12 +165,12 @@ function StepCard({ icon: Icon, title, description, children }: {
   return (
     <div>
       <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 rounded-xl bg-blue-50">
+        <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/30">
           <Icon size={24} className="text-[#2563EB]" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-slate-900">{title}</h2>
-          <p className="text-sm text-slate-500">{description}</p>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">{title}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
         </div>
       </div>
       {children}

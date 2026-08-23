@@ -6,6 +6,7 @@ export interface AuthUser {
   id: string
   email: string
   brandId: string | null
+  role: string
 }
 
 declare global {
@@ -41,21 +42,30 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
     const email = p.email as string
 
     const brandId = p.brandId as string | null
+    const tokenRole = p.role as string | undefined
+
+    const resolveRole = (fallbackBrandId: string | null) => {
+      if (tokenRole) return Promise.resolve(tokenRole)
+      // Old tokens without role — look up from DB
+      return prisma.user.findUnique({ where: { id: userId }, select: { role: true } })
+        .then(u => u?.role ?? 'viewer')
+    }
+
     if (brandId) {
-      // Verify brand exists
       prisma.brand.findUnique({ where: { id: brandId }, select: { id: true } })
-        .then(brand => {
-          req.user = { id: userId, email, brandId: brand?.id ?? null }
+        .then(async brand => {
+          const role = await resolveRole(brand?.id ?? null)
+          req.user = { id: userId, email, brandId: brand?.id ?? null, role }
           next()
         })
         .catch(() => {
           res.status(401).json({ success: false, error: 'Brand not found' })
         })
     } else {
-      // Fallback for tokens without brandId — find user's brand
       prisma.brand.findFirst({ where: { users: { some: { id: userId } } }, select: { id: true } })
-        .then(brand => {
-          req.user = { id: userId, email, brandId: brand?.id ?? null }
+        .then(async brand => {
+          const role = await resolveRole(brand?.id ?? null)
+          req.user = { id: userId, email, brandId: brand?.id ?? null, role }
           next()
         })
         .catch(() => {
