@@ -54,12 +54,23 @@ Built for markets where cash-on-delivery, high return rates and offline bazaar s
 
 ## Screenshots
 
-> Screenshots are not committed yet. Drop images into `docs/images/` and reference them here — GitHub renders them in search results and social cards.
+### Break-even ROAS calculator
 
-<!--
-![Brand OS profitability dashboard showing net margin per product](docs/images/dashboard.png)
-![Break-even ROAS calculator with per-product targets](docs/images/beroas.png)
--->
+Per-product break-even targets derived from real unit economics — COGS, shipping and allocated overhead — not a guessed margin.
+
+![Brand OS break-even ROAS calculator showing a 4.35x BEROAS target and a per-product breakeven ROAS table with margin percentages](docs/images/beroas.png)
+
+### Profitability
+
+Net margin per product after COGS, shipping and ad attribution, with a margin-vs-revenue map that separates the products worth scaling from the ones quietly losing money.
+
+![Brand OS profitability dashboard with margin versus revenue scatter plot and per-product gross profit table](docs/images/profitability.png)
+
+### Offline POS for bazaars and pop-ups
+
+Sell at events against the same inventory, with per-event stock and settlement history.
+
+![Brand OS point-of-sale interface showing a product grid with size, price and remaining stock alongside a cart panel](docs/images/pos.png)
 
 ## Tech stack
 
