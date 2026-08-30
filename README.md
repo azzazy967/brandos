@@ -54,6 +54,12 @@ Built for markets where cash-on-delivery, high return rates and offline bazaar s
 
 ## Screenshots
 
+### Dashboard
+
+Month-to-date revenue, orders and true profit margin alongside blended ROAS measured against its break-even target — so a campaign's health is a computed verdict, not a vibe.
+
+![Brand OS dashboard showing MTD revenue, profit margin, blended ROAS of 4.89x against a 3.41x break-even target, and a revenue versus ad spend chart](docs/images/dashboard.png)
+
 ### Break-even ROAS calculator
 
 Per-product break-even targets derived from real unit economics — COGS, shipping and allocated overhead — not a guessed margin.
