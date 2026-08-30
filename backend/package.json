@@ -23,7 +23,6 @@
     "helmet": "^8.0.0",
     "ioredis": "^5.4.0",
     "jsonwebtoken": "^9.0.0",
-    "multer": "^1.4.5-lts.1",
     "zod": "^3.23.0"
   },
   "devDependencies": {
@@ -31,7 +30,6 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.0",
-    "@types/multer": "^1.4.12",
     "@types/node": "^22.0.0",
     "prisma": "^6.0.0",
     "tsx": "^4.0.0",
