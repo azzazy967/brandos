@@ -22,7 +22,7 @@
     "lucide-react": "^0.460.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.0.0",
+    "react-router-dom": "^7.18.2",
     "recharts": "^2.15.0",
     "tailwind-merge": "^2.6.0",
     "zustand": "^5.0.0"
