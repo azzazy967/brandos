@@ -5,6 +5,12 @@
 </p>
 
 <p align="center">
+  <a href="https://azzazy967.github.io/brandos/"><strong>Website</strong></a> &nbsp;&middot;&nbsp;
+  <a href="docs/INSTALL.md"><strong>Install guide</strong></a> &nbsp;&middot;&nbsp;
+  <a href="https://github.com/azzazy967/brandos/releases/latest"><strong>Releases</strong></a>
+</p>
+
+<p align="center">
   <a href="#license"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white">
   <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black">
