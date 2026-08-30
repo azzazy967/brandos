@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brand OS — Open-Source Break-Even ROAS &amp; Profitability Dashboard for D2C Brands</title>
+<meta name="description" content="Self-hosted e-commerce operations platform for Shopify and D2C brands. Per-product break-even ROAS (BEROAS), true profit margin after COGS and shipping, cash-on-delivery reconciliation, inventory planning and an offline POS. MIT licensed.">
+<link rel="canonical" href="https://azzazy967.github.io/brandos/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://azzazy967.github.io/brandos/">
+<meta property="og:title" content="Brand OS — Open-Source Break-Even ROAS &amp; Profitability Dashboard">
+<meta property="og:description" content="Know the exact ROAS each product must beat before a campaign burns cash. Self-hosted, MIT licensed, built for cash-on-delivery markets.">
+<meta property="og:image" content="https://azzazy967.github.io/brandos/images/dashboard.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Brand OS — Open-Source Break-Even ROAS &amp; Profitability Dashboard">
+<meta name="twitter:description" content="Per-product break-even ROAS, true margin after COGS and shipping, COD reconciliation. Self-hosted and MIT licensed.">
+<meta name="twitter:image" content="https://azzazy967.github.io/brandos/images/dashboard.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Brand OS",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "E-commerce Analytics",
+  "operatingSystem": "Linux, macOS, Windows (Docker)",
+  "description": "Open-source self-hosted e-commerce brand operations platform: per-product break-even ROAS, profitability after COGS and shipping, cash-on-delivery reconciliation, inventory planning and offline POS.",
+  "url": "https://azzazy967.github.io/brandos/",
+  "downloadUrl": "https://github.com/azzazy967/brandos",
+  "codeRepository": "https://github.com/azzazy967/brandos",
+  "programmingLanguage": ["TypeScript", "SQL"],
+  "license": "https://opensource.org/licenses/MIT",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "featureList": [
+    "Break-even ROAS (BEROAS) calculator per product",
+    "True profit margin after COGS, shipping and overhead",
+    "Cash-on-delivery reconciliation and failed-delivery tracking",
+    "Inventory and restock planning",
+    "Offline point of sale for bazaars and pop-up events"
+  ]
+}
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --blue:#2563EB; --blue-2:#3B82F6; --orange:#F97316;
+  --ink:#0F172A; --body:#334155; --muted:#64748B;
+  --bg:#F8FAFC; --surface:#FFFFFF; --line:#E2E8F0;
+  --green:#16A34A; --red:#DC2626;
+  --mono:"Fira Code",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"Fira Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+  --sp:clamp(4rem,3rem + 4vw,7rem);
+  --shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px -12px rgba(15,23,42,.18);
+  --shadow-lg:0 32px 64px -24px rgba(15,23,42,.28);
+}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}
+*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+body{margin:0;background:var(--bg);color:var(--body);font:400 clamp(1rem,.96rem + .2vw,1.0625rem)/1.65 var(--sans);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--mono);color:var(--ink);letter-spacing:-.02em;line-height:1.12;margin:0}
+a{color:var(--blue);text-decoration-thickness:1px;text-underline-offset:3px}
+img{max-width:100%;height:auto;display:block}
+.wrap{width:min(1120px,100% - 2.5rem);margin-inline:auto}
+:focus-visible{outline:3px solid var(--blue);outline-offset:3px;border-radius:4px}
+.skip{position:absolute;left:-9999px}
+.skip:focus{left:1rem;top:1rem;z-index:99;background:var(--surface);padding:.75rem 1rem;border-radius:8px;box-shadow:var(--shadow)}
+
+/* nav */
+header{position:sticky;top:0;z-index:20;background:rgba(248,250,252,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.9rem 0}
+.brand{font-family:var(--mono);font-weight:700;font-size:1.0625rem;color:var(--ink);text-decoration:none}
+.brand span{color:var(--blue)}
+.nav-links{display:flex;gap:1.6rem;align-items:center;font-size:.9375rem}
+.nav-links a{color:var(--body);text-decoration:none;transition:color .18s ease}
+.nav-links a:hover{color:var(--blue)}
+@media(max-width:720px){.nav-links a:not(.btn){display:none}}
+
+.btn{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--mono);font-weight:600;font-size:.9375rem;
+  padding:.7rem 1.15rem;border-radius:10px;text-decoration:none;border:1px solid transparent;
+  transition:transform .18s ease,box-shadow .18s ease,background .18s ease;min-height:44px}
+.btn-primary{background:var(--ink);color:#fff;box-shadow:var(--shadow)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px -12px rgba(15,23,42,.5)}
+.btn-ghost{background:var(--surface);color:var(--ink);border-color:var(--line)}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue);transform:translateY(-2px)}
+
+/* hero */
+.hero{padding:calc(var(--sp) * .85) 0 var(--sp);position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;inset:0 0 auto;height:520px;z-index:-1;
+  background:radial-gradient(900px 380px at 15% -8%,rgba(37,99,235,.10),transparent 65%),
+             radial-gradient(700px 320px at 92% 4%,rgba(249,115,22,.09),transparent 60%)}
+.eyebrow{display:inline-flex;align-items:center;gap:.55rem;font-family:var(--mono);font-size:.8125rem;font-weight:600;
+  color:var(--blue);background:rgba(37,99,235,.09);border:1px solid rgba(37,99,235,.2);
+  padding:.4rem .8rem;border-radius:999px;margin-bottom:1.5rem}
+h1{font-size:clamp(2.3rem,1.3rem + 4.4vw,4.1rem);max-width:17ch;margin-bottom:1.25rem}
+h1 em{font-style:normal;color:var(--blue)}
+.lede{font-size:clamp(1.075rem,1rem + .45vw,1.3rem);max-width:60ch;color:var(--body);margin:0 0 2rem}
+.cta-row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.cta-note{font-family:var(--mono);font-size:.8125rem;color:var(--muted)}
+
+/* formula — the distinctive block */
+.formula{margin:var(--sp) 0 0;background:var(--ink);border-radius:18px;padding:clamp(1.75rem,1rem + 3vw,3rem);
+  box-shadow:var(--shadow-lg);position:relative;overflow:hidden}
+.formula::before{content:"";position:absolute;inset:0;opacity:.4;
+  background:radial-gradient(600px 200px at 85% 0%,rgba(59,130,246,.28),transparent 60%)}
+.formula > *{position:relative}
+.formula h2{color:#fff;font-size:clamp(1.35rem,1.1rem + 1vw,1.9rem);margin-bottom:.7rem}
+.formula p{color:#94A3B8;max-width:62ch;margin:0 0 1.75rem}
+.formula code{display:block;font-family:var(--mono);font-size:clamp(.8125rem,.72rem + .42vw,1.0625rem);
+  color:#E2E8F0;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.2);
+  border-radius:10px;padding:1.1rem 1.25rem;overflow-x:auto;white-space:pre;line-height:1.9}
+.formula code b{color:var(--orange);font-weight:600}
+.verdict{margin-top:1.5rem;display:flex;flex-wrap:wrap;gap:.6rem}
+.chip{font-family:var(--mono);font-size:.8125rem;font-weight:600;padding:.4rem .8rem;border-radius:8px}
+.chip-ok{background:rgba(22,163,74,.16);color:#4ADE80}
+.chip-warn{background:rgba(249,115,22,.16);color:#FDBA74}
+.chip-bad{background:rgba(220,38,38,.16);color:#FCA5A5}
+
+/* sections */
+section{padding:var(--sp) 0}
+.sec-head{max-width:62ch;margin-bottom:2.75rem}
+.sec-head h2{font-size:clamp(1.7rem,1.3rem + 1.7vw,2.6rem);margin-bottom:.85rem}
+.sec-head p{margin:0;font-size:1.075rem}
+.kicker{font-family:var(--mono);font-size:.8125rem;font-weight:600;color:var(--orange);
+  text-transform:uppercase;letter-spacing:.09em;display:block;margin-bottom:.85rem}
+
+/* bento */
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:1.1rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:1.6rem;
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#CBD5E1}
+.card h3{font-size:1.075rem;margin-bottom:.55rem}
+.card p{margin:0;font-size:.9375rem;color:var(--muted)}
+.card.wide{grid-column:span 3}.card.third{grid-column:span 2}
+@media(max-width:900px){.card.wide,.card.third{grid-column:span 6}}
+.card .ico{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;margin-bottom:1rem;
+  background:rgba(37,99,235,.1);color:var(--blue)}
+.card.accent .ico{background:rgba(249,115,22,.12);color:var(--orange)}
+
+/* shots */
+figure{margin:0 0 3rem}
+figure img{border-radius:14px;border:1px solid var(--line);box-shadow:var(--shadow-lg);background:var(--surface)}
+figcaption{font-size:.9375rem;color:var(--muted);margin-top:.9rem;max-width:70ch}
+figcaption b{color:var(--ink);font-weight:600}
+
+/* stack */
+.stack-grid{display:flex;flex-wrap:wrap;gap:.5rem}
+.tag{font-family:var(--mono);font-size:.8125rem;background:var(--surface);border:1px solid var(--line);
+  color:var(--body);padding:.4rem .75rem;border-radius:8px}
+
+/* quickstart */
+pre{font-family:var(--mono);font-size:.875rem;line-height:1.85;background:var(--ink);color:#E2E8F0;
+  padding:1.4rem 1.5rem;border-radius:14px;overflow-x:auto;box-shadow:var(--shadow-lg);margin:0}
+pre .c{color:#64748B}
+pre .k{color:#7DD3FC}
+
+/* final cta */
+.final{text-align:center;border-top:1px solid var(--line)}
+.final h2{font-size:clamp(1.8rem,1.3rem + 2vw,2.8rem);margin-bottom:1rem}
+.final p{max-width:52ch;margin:0 auto 2rem}
+.final .cta-row{justify-content:center}
+
+footer{border-top:1px solid var(--line);padding:2.5rem 0;font-size:.875rem;color:var(--muted)}
+.foot{display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:center}
+.foot a{color:var(--body);text-decoration:none}
+.foot a:hover{color:var(--blue);text-decoration:underline}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+
+<header>
+  <div class="wrap">
+    <nav aria-label="Main">
+      <a class="brand" href="/brandos/">Brand<span>OS</span></a>
+      <div class="nav-links">
+        <a href="#beroas">Break-even ROAS</a>
+        <a href="#features">Features</a>
+        <a href="#screens">Screenshots</a>
+        <a href="#install">Install</a>
+        <a class="btn btn-primary" href="https://github.com/azzazy967/brandos">View on GitHub</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<div class="hero">
+  <div class="wrap">
+    <span class="eyebrow">MIT licensed &middot; self-hosted &middot; Docker</span>
+    <h1>Your ad report says revenue. <em>This says profit.</em></h1>
+    <p class="lede">Brand OS is an open-source operations platform for Shopify and D2C brands. It joins orders, ad spend, shipping and overhead into one number that matters: the exact ROAS each product must beat before a campaign starts losing money.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/azzazy967/brandos">Get it on GitHub</a>
+      <a class="btn btn-ghost" href="#install">Run it in 3 commands</a>
+      <span class="cta-note">No SaaS. Your data stays on your server.</span>
+    </div>
+
+    <div class="formula" id="beroas">
+      <h2>Break-even ROAS, from real unit economics</h2>
+      <p>Most calculators ask you to guess a margin. Brand OS derives it from what a unit actually costs you — landed cost, shipping, and this month's overhead spread across units sold.</p>
+      <code>overheadPerUnit = (rent + salaries + other) / unitsSoldThisMonth
+grossProfit     = sellingPrice - cogs - shipping - overheadPerUnit
+margin          = grossProfit / sellingPrice
+<b>BEROAS         = 1 / margin</b></code>
+      <div class="verdict">
+        <span class="chip chip-ok">at or above target — healthy</span>
+        <span class="chip chip-warn">within 10% below — warning</span>
+        <span class="chip chip-bad">further below — critical</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">What it does</span>
+      <h2>Built for the costs other dashboards ignore</h2>
+      <p>Cash on delivery, failed deliveries and offline market stalls are normal in most of the world. Brand OS treats them as first-class, not edge cases bolted on later.</p>
+    </div>
+    <div class="bento">
+      <article class="card wide">
+        <div class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg></div>
+        <h3>True profitability per product</h3>
+        <p>Net margin after COGS, shipping, returns and allocated overhead — with a margin-versus-revenue map that separates what to scale from what quietly loses money on every order.</p>
+      </article>
+      <article class="card third accent">
+        <div class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h3>COD reconciliation</h3>
+        <p>Track cash still uncollected by courier, and the failed deliveries that silently eat margin in cash-on-delivery markets.</p>
+      </article>
+      <article class="card third">
+        <div class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
+        <h3>Inventory &amp; restock</h3>
+        <p>Stock across warehouse, storefront and events, with restock planning and size-level demand signals.</p>
+      </article>
+      <article class="card third">
+        <div class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9h18l-1.5 11.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5z"/><path d="M8 9V6a4 4 0 1 1 8 0v3"/></svg></div>
+        <h3>Offline POS</h3>
+        <p>Sell at bazaars and pop-ups against the same inventory, with per-event stock and settlement history.</p>
+      </article>
+      <article class="card wide accent">
+        <div class="ico" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20h16"/><rect x="4" y="4" width="7" height="12" rx="1"/><rect x="14" y="9" width="6" height="7" rx="1"/></svg></div>
+        <h3>Blended ROAS against its break-even target</h3>
+        <p>Campaign health as a computed verdict rather than a vibe: measured return on ad spend, compared against the margin-derived number it actually has to clear.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="screens">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Screenshots</span>
+      <h2>Real screens, real numbers</h2>
+      <p>Captured from a running instance with seeded demo data — not mockups.</p>
+    </div>
+    <figure>
+      <img src="images/dashboard.png" width="1440" height="1350" loading="lazy" decoding="async" alt="Brand OS dashboard showing month-to-date revenue, 29.3% profit margin, blended ROAS of 4.89x against a 3.41x break-even target, and a revenue versus ad spend chart">
+      <figcaption><b>Dashboard.</b> Month-to-date revenue and true margin beside blended ROAS and the break-even target it must clear.</figcaption>
+    </figure>
+    <figure>
+      <img src="images/beroas.png" width="1434" height="1388" loading="lazy" decoding="async" alt="Brand OS break-even ROAS calculator showing a 4.35x BEROAS result with overhead per unit, gross profit per unit and a per-product breakeven ROAS table">
+      <figcaption><b>Break-even ROAS calculator.</b> Portfolio-level target plus a per-product table, so a media buyer knows the number to beat per SKU.</figcaption>
+    </figure>
+    <figure>
+      <img src="images/profitability.png" width="1434" height="1575" loading="lazy" decoding="async" alt="Brand OS profitability page with a margin versus revenue scatter plot and a per-product table of units sold, revenue, COGS and gross profit">
+      <figcaption><b>Profitability.</b> Margin-versus-revenue map with per-product gross profit and margin.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker">Install</span>
+      <h2>Running locally in three commands</h2>
+      <p>Docker Compose brings up PostgreSQL, Redis, the API and the web app. The stack refuses to start without real secrets — no deployment silently runs on a default key.</p>
+    </div>
+    <pre><span class="c"># 1. clone</span>
+git clone https://github.com/azzazy967/brandos.git &amp;&amp; cd brandos
+
+<span class="c"># 2. generate secrets (the stack will not boot without them)</span>
+printf <span class="k">'POSTGRES_PASSWORD=%s\nJWT_SECRET=%s\nENCRYPTION_KEY=%s\n'</span> \
+  <span class="k">"$(openssl rand -hex 16)"</span> <span class="k">"$(openssl rand -hex 32)"</span> <span class="k">"$(openssl rand -hex 32)"</span> &gt; .env
+
+<span class="c"># 3. build and seed</span>
+docker compose up -d --build
+docker compose exec backend npx prisma db push
+docker compose exec backend npx tsx prisma/seed.ts</pre>
+    <p style="margin-top:1.5rem">Then open <code style="font-family:var(--mono);font-size:.9em">http://localhost:3001</code>. Full instructions, including running without Docker, are in the <a href="https://github.com/azzazy967/brandos/blob/main/docs/INSTALL.md">installation guide</a>.</p>
+    <div class="stack-grid" style="margin-top:2rem">
+      <span class="tag">React 19</span><span class="tag">TypeScript</span><span class="tag">Vite</span>
+      <span class="tag">Tailwind CSS</span><span class="tag">Express</span><span class="tag">Prisma</span>
+      <span class="tag">PostgreSQL 16</span><span class="tag">Redis</span><span class="tag">BullMQ</span><span class="tag">Docker</span>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <h2>Stop optimising for revenue you never keep</h2>
+    <p>Free and MIT licensed. Self-host it, read every line, change what you need.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/azzazy967/brandos">Star it on GitHub</a>
+      <a class="btn btn-ghost" href="https://github.com/azzazy967/brandos/blob/main/docs/INSTALL.md">Read the install guide</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>Brand OS — open-source e-commerce brand operations. MIT licensed.</span>
+    <span>
+      <a href="https://github.com/azzazy967/brandos">GitHub</a> &middot;
+      <a href="https://github.com/azzazy967/brandos/blob/main/docs/INSTALL.md">Install</a> &middot;
+      <a href="https://github.com/azzazy967/brandos/blob/main/CONTRIBUTING.md">Contributing</a> &middot;
+      <a href="https://github.com/azzazy967/brandos/blob/main/SECURITY.md">Security</a>
+    </span>
+  </div>
+</footer>
+</body>
+</html>

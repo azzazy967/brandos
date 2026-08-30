@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://azzazy967.github.io/brandos/sitemap.xml
