@@ -32,7 +32,10 @@
     "@types/jsonwebtoken": "^9.0.0",
     "@types/node": "^22.0.0",
     "prisma": "^6.0.0",
-    "tsx": "^4.0.0",
+    "tsx": "^4.23.13",
     "typescript": "^5.7.0"
+  },
+  "overrides": {
+    "effect": "^3.20.0"
   }
 }
