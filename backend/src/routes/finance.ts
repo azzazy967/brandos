@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { z } from 'zod'
 import prisma from '../lib/prisma'
 import { authenticate } from '../middleware/auth'
+import { calculateBlendedRoas } from '../lib/beroas'
 
 const router = Router()
 router.use(authenticate)
@@ -24,7 +25,7 @@ router.get('/summary', async (req, res) => {
 
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-    const [orders, expenses, shipments, lastMonthOrders, lastMonthExpenses, lastMonthPos, trendOrders, trendPosOrders, trendSnapshots] = await Promise.all([
+    const [orders, expenses, shipments, lastMonthOrders, lastMonthExpenses, lastMonthPos, trendOrders, trendPosOrders, trendSnapshots, mtdSnapshots] = await Promise.all([
       prisma.order.findMany({ where: { brandId, createdAt: { gte: start, lte: end } } }),
       prisma.expense.findMany({ where: { brandId, date: { gte: start, lte: end } } }),
       prisma.shipment.findMany({ where: { brandId, codStatus: 'pending' } }),
@@ -34,6 +35,7 @@ router.get('/summary', async (req, res) => {
       prisma.order.findMany({ where: { brandId, createdAt: { gte: thirtyDaysAgo } }, select: { totalAmount: true, createdAt: true } }),
       prisma.posOrder.findMany({ where: { brandId, createdAt: { gte: thirtyDaysAgo } }, select: { finalAmount: true, createdAt: true } }),
       prisma.marketingSnapshot.findMany({ where: { brandId, date: { gte: thirtyDaysAgo } }, select: { spend: true, date: true } }),
+      prisma.marketingSnapshot.findMany({ where: { brandId, date: { gte: start, lte: end } }, select: { spend: true } }),
     ])
 
     const posOrders = await prisma.posOrder.findMany({ where: { brandId, createdAt: { gte: start, lte: end } } })
@@ -126,11 +128,14 @@ router.get('/summary', async (req, res) => {
       },
     ]
 
+    const adSpendMtd = mtdSnapshots.reduce((sum, m) => sum + m.spend, 0)
+    const { blendedRoas, beRoas } = calculateBlendedRoas({ revenue: revenueMtd, netProfit, adSpend: adSpendMtd })
+
     res.json({ success: true, data: {
       revenueMtd, expensesMtd, grossProfit, netProfit, marginPct: Math.round(marginPct * 100) / 100, codPending,
       revenueLastMonth, expensesLastMonth, ordersMtd, ordersLastMonth,
       marginLastMonth: Math.round(marginLastMonth * 100) / 100,
-      blendedRoas: 0, beRoas: 0,
+      blendedRoas, beRoas,
       revenueTrend, revenueBreakdown, expenseBreakdown, plTable,
     } })
   } catch (error) {

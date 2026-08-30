@@ -44,3 +44,33 @@ export function getBeroasColor(status: BeroasStatus): string {
   }
   return colors[status]
 }
+
+/**
+ * Portfolio-level blended ROAS and its break-even target.
+ *
+ * beRoas uses the same 1/margin identity as calculateProductBEROAS, applied to
+ * the whole book rather than a single SKU: at a 25% net margin you need 4.0x to
+ * break even. Returns 0 (not Infinity) when a figure is unknowable — no ad spend
+ * means blended ROAS is undefined, and a non-positive margin means no ad spend
+ * can break even — so the UI renders a falsy value instead of "Infinityx".
+ */
+export function calculateBlendedRoas(params: {
+  revenue: number
+  netProfit: number
+  adSpend: number
+}): { blendedRoas: number; beRoas: number; status: BeroasStatus | 'neutral' } {
+  const { revenue, netProfit, adSpend } = params
+
+  const blendedRoas = adSpend > 0 ? revenue / adSpend : 0
+  const margin = revenue > 0 ? netProfit / revenue : 0
+  const beRoas = margin > 0 ? 1 / margin : 0
+
+  // Without both figures there is nothing to compare, so don't assert a status.
+  const status = adSpend > 0 && beRoas > 0 ? getBeroasStatus(blendedRoas, beRoas) : 'neutral'
+
+  return {
+    blendedRoas: Math.round(blendedRoas * 100) / 100,
+    beRoas: Math.round(beRoas * 100) / 100,
+    status,
+  }
+}

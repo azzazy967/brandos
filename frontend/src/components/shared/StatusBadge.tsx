@@ -13,6 +13,7 @@ const statusConfig: Record<string, { label: string; variant: 'success' | 'warnin
   disconnected: { label: 'Disconnected', variant: 'muted' },
   dead_stock: { label: 'Dead Stock', variant: 'muted' },
   not_applicable: { label: 'N/A', variant: 'muted' },
+  neutral: { label: 'No Data', variant: 'muted' },
   low_stock: { label: 'Low Stock', variant: 'warning' },
   low: { label: 'Low', variant: 'warning' },
   warning: { label: 'Warning', variant: 'warning' },

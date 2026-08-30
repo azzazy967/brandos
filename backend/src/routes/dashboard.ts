@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import prisma from '../lib/prisma'
 import { authenticate } from '../middleware/auth'
+import { calculateBlendedRoas } from '../lib/beroas'
 
 const router = Router()
 router.use(authenticate)
@@ -13,13 +14,14 @@ router.get('/stats', async (req, res) => {
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
 
-    const [orders, posOrders, expenses, shipments, products, insights] = await Promise.all([
+    const [orders, posOrders, expenses, shipments, products, insights, snapshots] = await Promise.all([
       prisma.order.findMany({ where: { brandId, createdAt: { gte: startOfMonth } }, select: { totalAmount: true, paymentMethod: true } }),
       prisma.posOrder.findMany({ where: { brandId, createdAt: { gte: startOfMonth } }, select: { finalAmount: true } }),
       prisma.expense.findMany({ where: { brandId, date: { gte: startOfMonth } }, select: { amount: true } }),
       prisma.shipment.findMany({ where: { brandId }, select: { status: true, codAmount: true, codStatus: true, codCollectedAt: true } }),
       prisma.product.findMany({ where: { brandId }, select: { stockWarehouse: true, stockShopify: true, stockPhysical: true, lowStockThreshold: true } }),
       prisma.aiInsight.count({ where: { brandId, isRead: false } }),
+      prisma.marketingSnapshot.findMany({ where: { brandId, date: { gte: startOfMonth } }, select: { spend: true } }),
     ])
 
     const revenueMtd = orders.reduce((s, o) => s + o.totalAmount, 0) + posOrders.reduce((s, o) => s + o.finalAmount, 0)
@@ -37,7 +39,8 @@ router.get('/stats', async (req, res) => {
     const inTransitCount = shipments.filter(s => s.status === 'in_transit').length
     const failedCount = shipments.filter(s => s.status === 'failed').length
     const codUncollected = shipments.filter(s => s.codStatus === 'pending').reduce((s, sh) => s + sh.codAmount, 0)
-    const roasStatus = 'above'
+    const adSpendMtd = snapshots.reduce((sum, m) => sum + m.spend, 0)
+    const { status: roasStatus } = calculateBlendedRoas({ revenue: revenueMtd, netProfit: profitMtd, adSpend: adSpendMtd })
 
     res.json({
       success: true,

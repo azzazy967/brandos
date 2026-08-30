@@ -19,6 +19,8 @@ jobs:
         working-directory: backend
       - run: npx tsc --noEmit
         working-directory: backend
+      - run: npx tsx src/lib/beroas.test.ts
+        working-directory: backend
 
   frontend:
     runs-on: ubuntu-latest
