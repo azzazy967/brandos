@@ -35,7 +35,7 @@ router.put('/overhead', async (req, res) => {
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
     const parsed = overheadSchema.safeParse(req.body)
-    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues }); return }
 
     const settings = await prisma.overheadSettings.upsert({
       where: { brandId },
@@ -65,7 +65,7 @@ router.get('/integrations', async (req, res) => {
 
 const integrationSchema = z.object({
   type: z.enum(['shopify', 'windsor', 'aramex', 'bosta']),
-  credentials: z.record(z.string()),
+  credentials: z.record(z.string(), z.string()),
 })
 
 const upsertIntegration = async (brandId: string, type: string, credentials: Record<string, string>) => {
@@ -85,7 +85,7 @@ router.post('/integrations', async (req, res) => {
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
     const parsed = integrationSchema.safeParse(req.body)
-    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues }); return }
 
     const integration = await upsertIntegration(brandId, parsed.data.type, parsed.data.credentials)
     res.json({ success: true, data: { ...integration, credentials: '[encrypted]' } })
@@ -106,7 +106,7 @@ router.post('/integrations/:type', async (req, res) => {
     if (!VALID_INTEGRATION_TYPES.includes(typeParam as typeof VALID_INTEGRATION_TYPES[number])) {
       res.status(400).json({ success: false, error: `Invalid integration type. Must be one of: ${VALID_INTEGRATION_TYPES.join(', ')}` }); return
     }
-    const credentialsSchema = z.record(z.string())
+    const credentialsSchema = z.record(z.string(), z.string())
     const parsedCreds = credentialsSchema.safeParse(req.body)
     if (!parsedCreds.success) { res.status(400).json({ success: false, error: 'Invalid credentials' }); return }
 

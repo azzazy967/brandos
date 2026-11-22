@@ -42,7 +42,7 @@ router.put('/', requireMinRole('admin'), async (req, res) => {
     }
     const parsed = updateBrandSchema.safeParse(req.body)
     if (!parsed.success) {
-      res.status(400).json({ success: false, error: parsed.error.errors })
+      res.status(400).json({ success: false, error: parsed.error.issues })
       return
     }
     const brand = await prisma.brand.update({

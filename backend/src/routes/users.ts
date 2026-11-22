@@ -49,7 +49,7 @@ router.post('/invite', requireMinRole('admin'), async (req, res) => {
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
     const parsed = inviteSchema.safeParse(req.body)
-    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues }); return }
 
     const { email, name, role, password } = parsed.data
 
@@ -76,7 +76,7 @@ router.put('/:userId/role', requireMinRole('admin'), async (req, res) => {
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
     const parsed = updateRoleSchema.safeParse(req.body)
-    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues }); return }
 
     const target = await prisma.user.findFirst({ where: { id: req.params.userId as string, brandId } })
     if (!target) { res.status(404).json({ success: false, error: 'User not found' }); return }
@@ -126,7 +126,7 @@ router.delete('/:userId', requireMinRole('admin'), async (req, res) => {
 router.put('/me/password', async (req, res) => {
   try {
     const parsed = changePasswordSchema.safeParse(req.body)
-    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues }); return }
 
     const user = await prisma.user.findUnique({ where: { id: req.user!.id } })
     if (!user) { res.status(404).json({ success: false, error: 'User not found' }); return }

@@ -45,7 +45,7 @@ router.post('/orders', async (req, res) => {
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
     const parsed = createPosOrderSchema.safeParse(req.body)
-    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues }); return }
 
     const { items, paymentMethod, discountAmount = 0, eventId, notes } = parsed.data
 
@@ -202,7 +202,7 @@ router.post('/events', async (req, res) => {
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
     const parsed = createEventSchema.safeParse(req.body)
-    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues }); return }
 
     const { name, location, startDate, inventory = [] } = parsed.data
 

@@ -200,7 +200,7 @@ router.put('/:id', async (req, res) => {
   try {
     const { brandId } = req.user!
     const parsed = updateProductSchema.safeParse(req.body)
-    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues }); return }
 
     const product = await prisma.product.updateMany({
       where: { id: req.params.id, brandId: brandId! },
@@ -226,7 +226,7 @@ router.post('/transfer', async (req, res) => {
   try {
     const { brandId } = req.user!
     const parsed = transferSchema.safeParse(req.body)
-    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues }); return }
     const { productId, from, to, quantity } = parsed.data
 
     const product = await prisma.product.findFirst({ where: { id: productId, brandId: brandId! } })

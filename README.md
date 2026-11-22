@@ -6,6 +6,8 @@
 
 <p align="center">
   <a href="https://azzazy967.github.io/brandos/"><strong>Website</strong></a> &nbsp;&middot;&nbsp;
+  <a href="https://azzazy967.github.io/brandos/launch/"><strong>Why Brand OS</strong></a> &nbsp;&middot;&nbsp;
+  <a href="docs/GHCR.md"><strong>Docker images</strong></a> &nbsp;&middot;&nbsp;
   <a href="docs/INSTALL.md"><strong>Install guide</strong></a> &nbsp;&middot;&nbsp;
   <a href="https://github.com/azzazy967/brandos/releases/latest"><strong>Releases</strong></a>
 </p>
@@ -93,7 +95,25 @@ Sell at events against the same inventory, with per-event stock and settlement h
 
 ## Quick start
 
-The fastest path is Docker Compose — it brings up PostgreSQL, Redis, the API and the web app together.
+**Fastest: prebuilt Docker images.** No source checkout or local build needed — download the compose file and start the stack:
+
+```bash
+cat > .env <<EOT
+POSTGRES_PASSWORD=$(openssl rand -hex 32)
+JWT_SECRET=$(openssl rand -hex 32)
+ENCRYPTION_KEY=$(openssl rand -hex 32)
+CORS_ORIGIN=http://localhost:3001
+EOT
+
+curl -O https://raw.githubusercontent.com/azzazy967/brandos/main/docker-compose.published.yml
+COMPOSE_FILE=docker-compose.published.yml docker compose up -d
+COMPOSE_FILE=docker-compose.published.yml docker compose exec backend npx prisma db push
+COMPOSE_FILE=docker-compose.published.yml docker compose exec backend npx tsx prisma/seed.ts
+```
+
+Images are published to `ghcr.io/azzazy967/brandos-{backend,frontend}` from `main` on every change. See **[docs/GHCR.md](docs/GHCR.md)** for SHA-pinned installs and details.
+
+**From source:** Docker Compose brings up PostgreSQL, Redis, the API and the web app together.
 
 ```bash
 git clone https://github.com/azzazy967/brandos.git

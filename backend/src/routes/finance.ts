@@ -235,7 +235,7 @@ router.post('/expenses', async (req, res) => {
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
     const parsed = createExpenseSchema.safeParse(req.body)
-    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues }); return }
 
     const expense = await prisma.expense.create({
       data: { ...parsed.data, brandId, date: new Date(parsed.data.date), source: 'manual' },

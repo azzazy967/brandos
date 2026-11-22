@@ -78,7 +78,7 @@ router.post('/', async (req, res) => {
     if (!brandId) { res.status(400).json({ success: false, error: 'No brand' }); return }
 
     const parsed = createTaskSchema.safeParse(req.body)
-    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues }); return }
 
     const { dueDate, ...rest } = parsed.data
     const task = await prisma.task.create({
@@ -106,7 +106,7 @@ router.put('/:id', async (req, res) => {
     if (!existing) { res.status(404).json({ success: false, error: 'Task not found' }); return }
 
     const parsed = createTaskSchema.partial().safeParse(req.body)
-    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.errors }); return }
+    if (!parsed.success) { res.status(400).json({ success: false, error: parsed.error.issues }); return }
 
     const { dueDate, ...rest } = parsed.data
     const data: Record<string, unknown> = { ...rest }
